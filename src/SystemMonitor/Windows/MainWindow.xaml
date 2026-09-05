@@ -1,0 +1,86 @@
+<Window x:Class="SystemMonitor.Windows.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:SystemMonitor.Controls"
+        xmlns:vm="clr-namespace:SystemMonitor.ViewModels"
+        Style="{StaticResource MonWin.Window.Overlay}"
+        x:Name="Root"
+        Title="MonWin System Monitor">
+
+    <Window.ContextMenu>
+        <ContextMenu>
+            <MenuItem Header="Open Detailed View" Click="OnOpenDetailedClick" />
+            <MenuItem Header="Settings" Click="OnOpenSettingsClick" />
+            <MenuItem Header="Pause Monitoring" Command="{Binding TogglePauseCommand}" IsCheckable="True" IsChecked="{Binding IsPaused, Mode=OneWay}" />
+            <MenuItem Header="Start with Windows" Command="{Binding ToggleStartWithWindowsCommand}" IsCheckable="True" IsChecked="{Binding Settings.StartWithWindows, Mode=OneWay}" />
+            <MenuItem Header="About" Click="OnOpenAboutClick" />
+            <Separator />
+            <MenuItem Header="Exit" Click="OnExitClick" />
+        </ContextMenu>
+    </Window.ContextMenu>
+
+    <Border x:Name="CardBorder"
+            Style="{StaticResource MonWin.Border.Card}"
+            MouseLeftButtonUp="OnCardLeftClick"
+            MouseDown="OnCardMouseDown"
+            ToolTipService.IsEnabled="{Binding Settings.ShowTooltip}">
+
+        <Border.ToolTip>
+            <ToolTip Content="Left-click to open the detailed monitor. Right-click for settings." />
+        </Border.ToolTip>
+
+        <Grid>
+            <!-- Compact / Compact+Graph overlay row -->
+            <StackPanel Orientation="Horizontal" x:Name="OverlayContent">
+                <controls:MetricControl Label="CPU" ValueText="{Binding CpuValueText}"
+                                         Values="{Binding CpuHistory}" IsCompact="True"
+                                         ShowGraph="{Binding Settings.DisplayMode, Converter={StaticResource EnumEquals}, ConverterParameter=CompactGraph}"
+                                         Visibility="{Binding Settings.ShowCpu, Converter={StaticResource BoolToVisibility}}"
+                                         Margin="0,0,10,0" />
+                <controls:MetricControl Label="RAM" ValueText="{Binding RamValueText}"
+                                         Values="{Binding MemoryHistory}" IsCompact="True"
+                                         ShowGraph="{Binding Settings.DisplayMode, Converter={StaticResource EnumEquals}, ConverterParameter=CompactGraph}"
+                                         Visibility="{Binding Settings.ShowRam, Converter={StaticResource BoolToVisibility}}"
+                                         Margin="0,0,10,0" />
+                <controls:MetricControl Label="GPU" ValueText="{Binding GpuValueText}"
+                                         Values="{Binding GpuHistory}" IsCompact="True"
+                                         ShowGraph="{Binding Settings.DisplayMode, Converter={StaticResource EnumEquals}, ConverterParameter=CompactGraph}"
+                                         Visibility="{Binding Settings.ShowGpu, Converter={StaticResource BoolToVisibility}}" />
+            </StackPanel>
+
+            <!-- Detailed presentation -->
+            <StackPanel Orientation="Vertical" x:Name="DetailedContent" Visibility="Collapsed" MinWidth="260">
+                <DockPanel Margin="0,0,0,10">
+                    <TextBlock Text="System Monitor" FontSize="15" FontWeight="Bold"
+                               Foreground="{DynamicResource MonWin.Foreground}" />
+                    <Button Content="✕" DockPanel.Dock="Right" Width="24" Height="24"
+                            Style="{StaticResource MonWin.Button.Secondary}"
+                            Click="OnCloseDetailedClick" HorizontalAlignment="Right" />
+                </DockPanel>
+
+                <controls:MetricControl Label="CPU" ValueText="{Binding CpuValueText}"
+                                         SecondaryText="{Binding CpuSecondaryText}"
+                                         Values="{Binding CpuHistory}" IsCompact="False"
+                                         Visibility="{Binding Settings.ShowCpu, Converter={StaticResource BoolToVisibility}}"
+                                         Margin="0,0,0,14" />
+                <TextBlock Text="{Binding ProcessorInfoText}" FontSize="10" Opacity="0.55"
+                           Foreground="{DynamicResource MonWin.Foreground}" Margin="0,-10,0,14"
+                           Visibility="{Binding Settings.ShowCpu, Converter={StaticResource BoolToVisibility}}" />
+
+                <controls:MetricControl Label="RAM" ValueText="{Binding RamValueText}"
+                                         SecondaryText="{Binding RamSecondaryText}"
+                                         Values="{Binding MemoryHistory}" IsCompact="False"
+                                         Visibility="{Binding Settings.ShowRam, Converter={StaticResource BoolToVisibility}}"
+                                         Margin="0,0,0,14" />
+
+                <controls:MetricControl Label="GPU" ValueText="{Binding GpuValueText}"
+                                         SecondaryText="{Binding GpuSecondaryText}"
+                                         Values="{Binding GpuHistory}" IsCompact="False"
+                                         Visibility="{Binding Settings.ShowGpu, Converter={StaticResource BoolToVisibility}}" />
+                <TextBlock Text="{Binding GpuName}" FontSize="10" Opacity="0.55"
+                           Foreground="{DynamicResource MonWin.Foreground}" Margin="0,4,0,0"
+                           Visibility="{Binding Settings.ShowGpu, Converter={StaticResource BoolToVisibility}}" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>
