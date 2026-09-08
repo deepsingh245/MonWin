@@ -27,6 +27,7 @@ public sealed class SettingsViewModel : ObservableObject
     private bool _showTooltip;
     private bool _clickThrough;
     private int? _selectedGpuAdapterIndex;
+    private string? _accentColorHex;
 
     public int[] UpdateIntervalOptionsMs => AppSettings.ValidUpdateIntervalsMs;
     public int[] HistoryOptionsSeconds => AppSettings.ValidHistorySeconds;
@@ -49,9 +50,18 @@ public sealed class SettingsViewModel : ObservableObject
     public bool ShowTooltip { get => _showTooltip; set => SetProperty(ref _showTooltip, value); }
     public bool ClickThrough { get => _clickThrough; set => SetProperty(ref _clickThrough, value); }
     public int? SelectedGpuAdapterIndex { get => _selectedGpuAdapterIndex; set => SetProperty(ref _selectedGpuAdapterIndex, value); }
+    public string? AccentColorHex { get => _accentColorHex; set => SetProperty(ref _accentColorHex, value); }
+
+    /// <summary>A small, Windows-11-flavored quick-pick palette. "Custom..." opens the
+    /// native Windows color picker for anything else.</summary>
+    public IReadOnlyList<string> PresetAccentColors { get; } =
+        ["#0067C0", "#0F7B0F", "#8764B8", "#CA5010", "#C42B1C", "#00B7C3", "#E3008C", "#69797E"];
 
     public RelayCommand SaveCommand { get; }
     public RelayCommand CancelCommand { get; }
+    public RelayCommand SelectAccentColorCommand { get; }
+    public RelayCommand PickCustomColorCommand { get; }
+    public RelayCommand ResetAccentColorCommand { get; }
 
     public event EventHandler? RequestClose;
 
@@ -65,6 +75,38 @@ public sealed class SettingsViewModel : ObservableObject
 
         SaveCommand = new RelayCommand(Save);
         CancelCommand = new RelayCommand(() => RequestClose?.Invoke(this, EventArgs.Empty));
+        SelectAccentColorCommand = new RelayCommand(p => AccentColorHex = p as string);
+        PickCustomColorCommand = new RelayCommand(PickCustomColor);
+        ResetAccentColorCommand = new RelayCommand(() => AccentColorHex = null);
+    }
+
+    private void PickCustomColor()
+    {
+        using var dialog = new System.Windows.Forms.ColorDialog { FullOpen = true };
+        if (!string.IsNullOrWhiteSpace(AccentColorHex) && TryParseHex(AccentColorHex, out var r, out var g, out var b))
+        {
+            dialog.Color = System.Drawing.Color.FromArgb(r, g, b);
+        }
+
+        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+        {
+            var c = dialog.Color;
+            AccentColorHex = $"#{c.R:X2}{c.G:X2}{c.B:X2}";
+        }
+    }
+
+    private static bool TryParseHex(string hex, out byte r, out byte g, out byte b)
+    {
+        r = g = b = 0;
+        var clean = hex.TrimStart('#');
+        if (clean.Length != 6)
+        {
+            return false;
+        }
+
+        return byte.TryParse(clean[..2], System.Globalization.NumberStyles.HexNumber, null, out r)
+            && byte.TryParse(clean[2..4], System.Globalization.NumberStyles.HexNumber, null, out g)
+            && byte.TryParse(clean[4..6], System.Globalization.NumberStyles.HexNumber, null, out b);
     }
 
     private void LoadFrom(AppSettings s)
@@ -86,10 +128,15 @@ public sealed class SettingsViewModel : ObservableObject
         _showTooltip = s.ShowTooltip;
         _clickThrough = s.ClickThrough;
         _selectedGpuAdapterIndex = s.SelectedGpuAdapterIndex;
+        _accentColorHex = s.AccentColorHex;
     }
 
     private void Save()
     {
+        // Start from the current settings so fields this dialog doesn't expose (the
+        // resize grip's OverlayScale, and the Left/Right position pixel offsets) are
+        // preserved rather than silently reset to their defaults.
+        var current = _settingsService.Current;
         var settings = new AppSettings
         {
             StartWithWindows = StartWithWindows,
@@ -103,12 +150,16 @@ public sealed class SettingsViewModel : ObservableObject
             ShowNetwork = ShowNetwork,
             ShowDisk = ShowDisk,
             Position = Position,
+            PositionOffsetX = current.PositionOffsetX,
+            PositionOffsetY = current.PositionOffsetY,
             CustomX = CustomX,
             CustomY = CustomY,
             Theme = Theme,
             ShowTooltip = ShowTooltip,
             ClickThrough = ClickThrough,
             SelectedGpuAdapterIndex = SelectedGpuAdapterIndex,
+            AccentColorHex = AccentColorHex,
+            OverlayScale = current.OverlayScale,
         };
 
         _startupService.SetEnabled(StartWithWindows);

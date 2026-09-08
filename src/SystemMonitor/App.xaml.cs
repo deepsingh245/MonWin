@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using SystemMonitor.Services;
@@ -40,6 +41,7 @@ public partial class App : Application
 
         ApplyTheme();
         _services.GetRequiredService<IThemeService>().SystemThemeChanged += (_, _) => Dispatcher.Invoke(ApplyTheme);
+        _services.GetRequiredService<ISettingsService>().SettingsChanged += (_, _) => Dispatcher.Invoke(ApplyTheme);
 
         _mainWindow = _services.GetRequiredService<MainWindow>();
 
@@ -98,6 +100,49 @@ public partial class App : Application
         {
             dictionaries.Insert(0, newDictionary);
         }
+
+        ApplyAccentOverride(settings.AccentColorHex);
+    }
+
+    /// <summary>
+    /// Overrides the theme's default accent brushes with a user-picked color. Setting the
+    /// keys directly on Application.Resources (rather than inside a merged dictionary)
+    /// takes precedence over whatever Light.xaml/Dark.xaml defined, and clearing them
+    /// (null/empty hex) falls back to the theme default automatically.
+    /// </summary>
+    private void ApplyAccentOverride(string? accentHex)
+    {
+        Resources.Remove("MonWin.Accent");
+        Resources.Remove("MonWin.AccentFill");
+
+        if (string.IsNullOrWhiteSpace(accentHex))
+        {
+            return;
+        }
+
+        Color color;
+        try
+        {
+            if (ColorConverter.ConvertFromString(accentHex) is not Color parsed)
+            {
+                return;
+            }
+
+            color = parsed;
+        }
+        catch (FormatException)
+        {
+            _logger?.LogWarning($"Invalid accent color '{accentHex}', ignoring.");
+            return;
+        }
+
+        var accentBrush = new SolidColorBrush(color);
+        accentBrush.Freeze();
+        Resources["MonWin.Accent"] = accentBrush;
+
+        var fillBrush = new SolidColorBrush(Color.FromArgb(38, color.R, color.G, color.B));
+        fillBrush.Freeze();
+        Resources["MonWin.AccentFill"] = fillBrush;
     }
 
     private void SetupTrayIcon()

@@ -19,14 +19,22 @@
         </ContextMenu>
     </Window.ContextMenu>
 
+    <Grid>
     <Border x:Name="CardBorder"
             Style="{StaticResource MonWin.Border.Card}"
+            PreviewMouseLeftButtonDown="OnCardPreviewMouseLeftButtonDown"
             MouseLeftButtonUp="OnCardLeftClick"
             MouseDown="OnCardMouseDown"
             ToolTipService.IsEnabled="{Binding Settings.ShowTooltip}">
 
+        <Border.LayoutTransform>
+            <ScaleTransform x:Name="CardScaleTransform"
+                            ScaleX="{Binding Settings.OverlayScale, Mode=OneWay}"
+                            ScaleY="{Binding Settings.OverlayScale, Mode=OneWay}" />
+        </Border.LayoutTransform>
+
         <Border.ToolTip>
-            <ToolTip Content="Left-click to open the detailed monitor. Right-click for settings." />
+            <ToolTip Content="Left-click to open the detailed monitor. Right-click for settings. Drag to move; drag the corner grip to resize." />
         </Border.ToolTip>
 
         <Grid>
@@ -83,4 +91,30 @@
             </StackPanel>
         </Grid>
     </Border>
+
+    <Thumb x:Name="ResizeThumb"
+           Width="14" Height="14" Cursor="SizeNWSE"
+           HorizontalAlignment="Right" VerticalAlignment="Bottom"
+           Margin="0,0,-3,-3"
+           DragDelta="OnResizeThumbDragDelta"
+           DragCompleted="OnResizeThumbDragCompleted"
+           MouseLeftButtonDown="OnResizeThumbMouseLeftButtonDown"
+           ToolTip="Drag to resize. Double-click to reset.">
+        <Thumb.Style>
+            <Style TargetType="Thumb">
+                <Setter Property="Opacity" Value="0.25" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsMouseOver, ElementName=CardBorder}" Value="True">
+                        <Setter Property="Opacity" Value="0.9" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Thumb.Style>
+        <Thumb.Template>
+            <ControlTemplate TargetType="Thumb">
+                <Path Data="M 14,0 L 14,14 L 0,14 Z" Fill="{DynamicResource MonWin.Accent}" />
+            </ControlTemplate>
+        </Thumb.Template>
+    </Thumb>
+    </Grid>
 </Window>

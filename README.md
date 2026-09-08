@@ -18,6 +18,9 @@ CPU 32%  ▁▂▃▅▃▂    RAM 49%  ▃▄▃▄▅    GPU 1%  ▁▁▁▂�
 - Follows Windows light/dark theme, or set it manually.
 - Left-click for the detailed view, right-click for settings, middle-click to
   hide/show, optional click-through mode.
+- Drag the overlay to move it anywhere (remembers the drop spot as a Custom position);
+  drag the small corner grip to resize the whole card (double-click the grip to reset).
+- Customizable accent color — quick presets or the native Windows color picker.
 - System tray icon; closing the detailed view does not stop monitoring.
 - Local JSON settings, local rotating log file, zero network access.
 
@@ -58,7 +61,12 @@ Settings (right-click → Settings) cover:
   history length (30–300s).
 - **Display**: Compact / Compact+Graph / Detailed; which metrics to show; overlay
   position (Left/Center/Right/Custom with X/Y offset); theme (System/Light/Dark).
+- **Color**: accent color presets, or "Custom..." for the native Windows color picker.
 - **Interaction**: tooltip on/off, click-through on/off.
+
+Beyond the Settings window, the overlay itself is directly manipulable: drag it to
+reposition (click-through mode disables this, since the window doesn't receive clicks
+at all then), and drag the small corner grip to resize — both persist immediately.
 
 Settings persist as JSON at `%LOCALAPPDATA%\SystemMonitor\settings.json`.
 

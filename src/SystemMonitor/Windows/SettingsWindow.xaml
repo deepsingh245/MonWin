@@ -61,6 +61,33 @@
             <RadioButton Content="Dark" GroupName="Theme"
                          IsChecked="{Binding Theme, Converter={StaticResource EnumEquals}, ConverterParameter=Dark}" />
 
+            <TextBlock Text="COLOR" Style="{StaticResource MonWin.SectionHeader}" />
+            <ItemsControl ItemsSource="{Binding PresetAccentColors}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Width="22" Height="22" Margin="0,0,6,0" Padding="0"
+                                Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                Command="{Binding DataContext.SelectAccentColorCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding}">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Ellipse Fill="{Binding}" Stroke="{DynamicResource MonWin.Border}" StrokeThickness="1" />
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                <Button Content="Custom..." Style="{StaticResource MonWin.Button.Secondary}" Command="{Binding PickCustomColorCommand}" Margin="0,0,8,0" />
+                <Button Content="Reset" Style="{StaticResource MonWin.Button.Secondary}" Command="{Binding ResetAccentColorCommand}" />
+            </StackPanel>
+
             <TextBlock Text="INTERACTION" Style="{StaticResource MonWin.SectionHeader}" />
             <CheckBox Content="Show tooltip" IsChecked="{Binding ShowTooltip}" />
             <CheckBox Content="Click-through" IsChecked="{Binding ClickThrough}" />

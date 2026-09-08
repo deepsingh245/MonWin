@@ -53,9 +53,20 @@ public sealed class AppSettings
     public bool ShowTooltip { get; set; } = true;
     public bool ClickThrough { get; set; }
 
+    /// <summary>Null = use the current theme's built-in accent color.</summary>
+    public string? AccentColorHex { get; set; }
+
+    /// <summary>Uniform scale applied to the whole card (drag the resize grip to change). 1.0 = default size.</summary>
+    public double OverlayScale { get; set; } = 1.0;
+
     /// <summary>Null = auto-select the busiest adapter at first run.</summary>
     public int? SelectedGpuAdapterIndex { get; set; }
 
     public static readonly int[] ValidUpdateIntervalsMs = [250, 500, 1000, 2000];
     public static readonly int[] ValidHistorySeconds = [30, 60, 120, 300];
+
+    public const double MinOverlayScale = 0.7;
+    public const double MaxOverlayScale = 2.0;
+
+    public static double ClampOverlayScale(double scale) => Math.Clamp(scale, MinOverlayScale, MaxOverlayScale);
 }

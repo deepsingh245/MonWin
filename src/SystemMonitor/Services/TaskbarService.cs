@@ -88,7 +88,16 @@ public sealed class TaskbarService : ITaskbarService
         // v1 focuses on the standard bottom taskbar (Windows 11 default and only
         // user-selectable position); other edges use the same anchoring logic against
         // the taskbar's own bounds, documented as best-effort in TROUBLESHOOTING.md.
-        var y = taskbar.Bounds.Top - overlayHeight - GapAboveTaskbar + offsetY;
+        //
+        // Sit directly on the taskbar strip (vertically centered within it) whenever the
+        // overlay is small enough to fit — this is what makes it read as "part of the
+        // taskbar" rather than a separate floating bar. Only fall back to floating just
+        // above it if the overlay (e.g. scaled up via the resize grip) is taller than the
+        // taskbar itself, since centering it would then spill off both edges.
+        var y = overlayHeight <= taskbar.Bounds.Height
+            ? taskbar.Bounds.Top + (taskbar.Bounds.Height - overlayHeight) / 2 + offsetY
+            : taskbar.Bounds.Top - overlayHeight - GapAboveTaskbar + offsetY;
+
         if (y < workArea.Top)
         {
             y = taskbar.Bounds.Top + offsetY;

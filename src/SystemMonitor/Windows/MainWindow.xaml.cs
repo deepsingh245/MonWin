@@ -1,7 +1,9 @@
 using System.Windows;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Threading;
 using SystemMonitor.Models;
 using SystemMonitor.Native;
 using SystemMonitor.ViewModels;
@@ -23,6 +25,11 @@ public partial class MainWindow : Window
     private const int WM_SETTINGCHANGE = 0x001A;
 
     private bool _isVisible = true;
+    private bool _suppressNextClick;
+    private DispatcherTimer? _topmostTimer;
+
+    // Corner-grip resize sensitivity: pixels of drag per 1.0 of scale change.
+    private const double ResizeDragSensitivity = 150.0;
 
     public MainWindow(MainViewModel viewModel)
     {
@@ -44,6 +51,21 @@ public partial class MainWindow : Window
 
         var hwndSource = HwndSource.FromHwnd(hwnd);
         hwndSource?.AddHook(WndProc);
+
+        // The taskbar (Shell_TrayWnd) is itself an always-on-top window, and focusing/
+        // clicking it can restack it above ours within the topmost band — a one-time
+        // SetWindowPos(HWND_TOPMOST) at show-time doesn't survive that. Re-assert on a
+        // steady cadence so we pop back above it within a second rather than staying
+        // stuck behind it (and unclickable) until the window is hidden/shown again.
+        _topmostTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _topmostTimer.Tick += (_, _) =>
+        {
+            if (IsVisible)
+            {
+                SetTopmost();
+            }
+        };
+        _topmostTimer.Start();
     }
 
     private nint WndProc(nint hwnd, int msg, nint wParam, nint lParam, ref bool handled)
@@ -140,8 +162,13 @@ public partial class MainWindow : Window
         var hwnd = new WindowInteropHelper(this).Handle;
         if (hwnd != 0)
         {
+            // x/y/cx/cy are ignored (and MUST be, via SWP_NOMOVE|SWP_NOSIZE) — this call
+            // only reorders the window in the z-order, it must never reposition it. Omitting
+            // SWP_NOMOVE here previously snapped the window to (0,0) on every call, which is
+            // exactly why dragging it appeared to "stick back to top-left" once the periodic
+            // topmost-reassertion timer fired.
             TaskbarInterop.SetWindowPos(hwnd, TaskbarInterop.HWND_TOPMOST, 0, 0, 0, 0,
-                TaskbarInterop.SWP_NOSIZE | TaskbarInterop.SWP_NOACTIVATE);
+                TaskbarInterop.SWP_NOMOVE | TaskbarInterop.SWP_NOSIZE | TaskbarInterop.SWP_NOACTIVATE);
         }
     }
 
@@ -173,8 +200,55 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>
+    /// Distinguishes a plain click (opens Detailed) from a drag (moves the overlay).
+    /// DragMove() blocks until the mouse button is released and only actually moves the
+    /// window once the OS's own drag threshold is exceeded, so a real click still leaves
+    /// Left/Top unchanged — that's the signal used below to tell the two apart.
+    /// </summary>
+    private void OnCardPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (_viewModel.Settings.ClickThrough)
+        {
+            return;
+        }
+
+        var startLeft = Left;
+        var startTop = Top;
+
+        try
+        {
+            DragMove();
+        }
+        catch (InvalidOperationException)
+        {
+            return;
+        }
+
+        var moved = Math.Abs(Left - startLeft) > 0.5 || Math.Abs(Top - startTop) > 0.5;
+        if (!moved)
+        {
+            return;
+        }
+
+        _suppressNextClick = true;
+        if (!_viewModel.IsDetailed)
+        {
+            var dpi = VisualTreeHelper.GetDpi(this);
+            var physicalX = (int)Math.Round(Left * dpi.DpiScaleX);
+            var physicalY = (int)Math.Round(Top * dpi.DpiScaleY);
+            _viewModel.SaveDraggedPosition(physicalX, physicalY);
+        }
+    }
+
     private void OnCardLeftClick(object sender, MouseButtonEventArgs e)
     {
+        if (_suppressNextClick)
+        {
+            _suppressNextClick = false;
+            return;
+        }
+
         if (!_viewModel.IsDetailed)
         {
             ShowDetailed();
@@ -187,6 +261,48 @@ public partial class MainWindow : Window
         {
             ToggleVisible();
         }
+    }
+
+    private void OnResizeThumbDragDelta(object sender, DragDeltaEventArgs e)
+    {
+        var delta = (e.HorizontalChange + e.VerticalChange) / 2.0 / ResizeDragSensitivity;
+        var newScale = AppSettings.ClampOverlayScale(CardScaleTransform.ScaleX + delta);
+        CardScaleTransform.ScaleX = newScale;
+        CardScaleTransform.ScaleY = newScale;
+        UpdateLayout();
+        if (_viewModel.IsDetailed)
+        {
+            CenterOnPrimaryScreen();
+        }
+        else
+        {
+            RepositionWindow();
+        }
+    }
+
+    private void OnResizeThumbDragCompleted(object sender, DragCompletedEventArgs e) =>
+        _viewModel.SaveScale(CardScaleTransform.ScaleX);
+
+    private void OnResizeThumbMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ClickCount != 2)
+        {
+            return;
+        }
+
+        CardScaleTransform.ScaleX = 1.0;
+        CardScaleTransform.ScaleY = 1.0;
+        UpdateLayout();
+        if (_viewModel.IsDetailed)
+        {
+            CenterOnPrimaryScreen();
+        }
+        else
+        {
+            RepositionWindow();
+        }
+
+        _viewModel.SaveScale(1.0);
     }
 
     private void OnCloseDetailedClick(object sender, RoutedEventArgs e) => ShowOverlay();

@@ -79,9 +79,23 @@ public sealed class SystemMonitorService : ISystemMonitorService
     private static int HistoryCapacity(AppSettings settings) =>
         Math.Max(1, settings.HistorySeconds * 1000 / Math.Max(1, settings.UpdateIntervalMs));
 
+    private int _tickInProgress;
+
     private void OnTick(object? state)
     {
         if (_isPaused)
+        {
+            return;
+        }
+
+        // System.Threading.Timer callbacks are not serialized against each other — if a
+        // sample takes longer than one interval (slow perf-counter refresh, GC pause,
+        // etc.) the next tick can fire while the previous one is still running. The
+        // GPU data source's internal caches aren't thread-safe (no caller previously
+        // needed them to be), so overlapping ticks were corrupting them. Skip a tick
+        // outright rather than overlap — a single missed 250ms-2s sample is invisible
+        // to the user, a corrupted dictionary is not.
+        if (Interlocked.CompareExchange(ref _tickInProgress, 1, 0) != 0)
         {
             return;
         }
@@ -105,6 +119,10 @@ public sealed class SystemMonitorService : ISystemMonitorService
         catch (Exception ex)
         {
             _logger.LogError("Monitor poll failed", ex);
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _tickInProgress, 0);
         }
     }
 

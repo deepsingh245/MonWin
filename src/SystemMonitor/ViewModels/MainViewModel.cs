@@ -104,7 +104,11 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         _dispatcher = dispatcher;
 
         _monitor.SnapshotUpdated += OnSnapshotUpdated;
-        _settingsService.SettingsChanged += (_, settings) => _monitor.ApplySettings(settings);
+        _settingsService.SettingsChanged += (_, settings) =>
+        {
+            _monitor.ApplySettings(settings);
+            OnPropertyChanged(nameof(Settings));
+        };
 
         ShowDetailedCommand = new RelayCommand(() => IsDetailed = true);
         ShowOverlayCommand = new RelayCommand(() => IsDetailed = false);
@@ -113,6 +117,28 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     }
 
     public ITaskbarService TaskbarService => _taskbarService;
+
+    /// <summary>Called after the user drags the overlay to a new spot — switches Position to
+    /// Custom and remembers the drop location (in physical screen pixels) instead of snapping
+    /// back to the Left/Center/Right taskbar anchor.</summary>
+    public void SaveDraggedPosition(int physicalX, int physicalY)
+    {
+        var settings = _settingsService.Current;
+        settings.Position = OverlayPosition.Custom;
+        settings.CustomX = physicalX;
+        settings.CustomY = physicalY;
+        settings.PositionOffsetX = 0;
+        settings.PositionOffsetY = 0;
+        _settingsService.Save(settings);
+    }
+
+    /// <summary>Called after the user finishes dragging the resize grip.</summary>
+    public void SaveScale(double scale)
+    {
+        var settings = _settingsService.Current;
+        settings.OverlayScale = AppSettings.ClampOverlayScale(scale);
+        _settingsService.Save(settings);
+    }
 
     private void TogglePause()
     {

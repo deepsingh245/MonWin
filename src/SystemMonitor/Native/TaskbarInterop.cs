@@ -18,6 +18,7 @@ internal static partial class TaskbarInterop
     internal static readonly nint HWND_TOPMOST = new(-1);
     internal const uint SWP_NOACTIVATE = 0x0010;
     internal const uint SWP_NOSIZE = 0x0001;
+    internal const uint SWP_NOMOVE = 0x0002;
     internal const uint SWP_SHOWWINDOW = 0x0040;
 
     internal const int ABM_GETTASKBARPOS = 0x00000005;
