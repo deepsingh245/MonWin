@@ -29,13 +29,22 @@ unusual multi-GPU configurations it may not. Use Settings → GPU adapter to pic
 correct one explicitly — the auto-selected default is the adapter currently doing the
 most work, which is usually right even when the name shown is ambiguous.
 
-## The overlay isn't near the taskbar / taskbar not found
+## The overlay isn't on the taskbar / taskbar not found
 
-MonWin locates the taskbar via `Shell_TrayWnd`. If that window can't be found (rare —
-e.g., mid-Explorer-restart), MonWin logs a warning and falls back to a floating window
-in the bottom-right of the primary monitor's work area. It re-attempts taskbar
-detection automatically on the next `TaskbarCreated` broadcast (Explorer restart),
-display change, or DPI change.
+For Left/Center/Right positions, MonWin sits directly on the taskbar (vertically
+centered within it) by locating it via `Shell_TrayWnd`. If that window can't be found
+(rare — e.g., mid-Explorer-restart), MonWin logs a warning and falls back to a floating
+window in the bottom-right of the primary monitor's work area instead. It re-attempts
+taskbar detection automatically on the next `TaskbarCreated` broadcast (Explorer
+restart), display change, or DPI change. If you've resized the overlay (drag the corner
+grip) larger than the taskbar itself, it floats just above the taskbar instead of
+overlapping both edges.
+
+## I dragged the overlay and now Left/Center/Right in Settings seem to do nothing
+
+Dragging switches the position to "Custom" (so it stays exactly where you dropped it)
+— open Settings and pick Left, Center, or Right again to go back to taskbar-anchored
+positioning.
 
 ## Taskbar auto-hide
 
@@ -70,5 +79,8 @@ and the tray icon (it may already be running minimized).
 - Logs: `%LOCALAPPDATA%\SystemMonitor\logs\app.log` (rotates at ~1MB)
 - Settings: `%LOCALAPPDATA%\SystemMonitor\settings.json`
 
-Deleting `settings.json` resets everything to defaults; MonWin does this automatically
-if it finds the file corrupted.
+Deleting `settings.json` resets everything to defaults. MonWin also does this
+automatically if it finds the file unreadable, and validates individual fields on every
+load — a hand-edited or otherwise out-of-range value (an invalid update interval, an
+overlay scale outside 0.7–2.0, etc.) is replaced with its default rather than breaking
+the app, so you don't need to delete the whole file just to fix one bad value.

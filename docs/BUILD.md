@@ -57,16 +57,16 @@ dotnet publish src\SystemMonitor\SystemMonitor.csproj -c Release -r win-x64 --se
 Zips `publish\` into `dist\MonWin-<version>-win-x64.zip` — a portable distributable.
 Run `publish.ps1` first.
 
-## Installation (current v1 approach: portable)
+## Installation (portable)
 
 1. Unzip the package anywhere (no installer needed, no admin rights needed).
 2. Run `SystemMonitor.exe`.
 3. Turn on "Start with Windows" from Settings or the tray menu if desired.
 
-MSIX packaging was considered but intentionally deferred: it adds identity/signing
-requirements that aren't worth the complexity for a portable personal utility (the spec
-this project follows explicitly allows this fallback). A future version could add an
-MSIX manifest and package project without changing anything else described here.
+MSIX packaging was considered but intentionally skipped: it adds identity/signing
+requirements that aren't worth the complexity for a portable utility like this one. A
+future release could add an MSIX manifest and packaging project without changing
+anything else described here.
 
 ## Icon
 

@@ -58,12 +58,53 @@ public sealed class SettingsService : ISettingsService
 
             var json = File.ReadAllText(path);
             var settings = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions);
-            return settings ?? new AppSettings();
+            return Sanitize(settings ?? new AppSettings());
         }
         catch (Exception ex)
         {
             logger.LogWarning($"Settings file corrupted or unreadable, restoring defaults: {ex.Message}");
             return new AppSettings();
         }
+    }
+
+    /// <summary>
+    /// Deserializing a valid JSON file doesn't guarantee valid field values — a hand-edited
+    /// or otherwise tampered settings.json could contain an out-of-range value that a plain
+    /// parse wouldn't catch. In particular, an invalid UpdateIntervalMs (zero/negative) would
+    /// crash System.Threading.Timer's constructor on startup, and that crash happens early
+    /// enough in App.OnStartup that it leaves no window and no tray icon behind — the app
+    /// would look like it silently failed to launch at all. Clamp/replace anything invalid
+    /// here so a bad file degrades to defaults for that field, never to a crash.
+    /// </summary>
+    private static AppSettings Sanitize(AppSettings settings)
+    {
+        if (!AppSettings.ValidUpdateIntervalsMs.Contains(settings.UpdateIntervalMs))
+        {
+            settings.UpdateIntervalMs = 500;
+        }
+
+        if (!AppSettings.ValidHistorySeconds.Contains(settings.HistorySeconds))
+        {
+            settings.HistorySeconds = 60;
+        }
+
+        settings.OverlayScale = AppSettings.ClampOverlayScale(settings.OverlayScale);
+
+        if (!Enum.IsDefined(settings.DisplayMode))
+        {
+            settings.DisplayMode = DisplayMode.CompactGraph;
+        }
+
+        if (!Enum.IsDefined(settings.Position))
+        {
+            settings.Position = OverlayPosition.Left;
+        }
+
+        if (!Enum.IsDefined(settings.Theme))
+        {
+            settings.Theme = AppTheme.System;
+        }
+
+        return settings;
     }
 }

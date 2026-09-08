@@ -38,11 +38,47 @@ exactly what it does and does not do, and which Windows APIs back each metric.
 | Explorer-restart detection | `RegisterWindowMessage("TaskbarCreated")` | `user32.dll` | Standard documented broadcast message every taskbar-aware app listens for. |
 | Overlay window behavior | `SetWindowLong(GWL_EXSTYLE, ...)`, `SetWindowPos(HWND_TOPMOST, ...)` | `user32.dll` | Applied only to MonWin's own window (tool-window style, no-activate, optional click-through, topmost). |
 | Start with Windows | `HKCU\...\CurrentVersion\Run` | Registry | Standard per-user autostart mechanism; no admin, no scheduled task, no service. |
+| Settings click-outside-to-dismiss | `SetWindowsHookEx(WH_MOUSE_LL, ...)` | `user32.dll` | See "About the mouse hook" below. |
+| Custom accent color | `System.Windows.Forms.ColorDialog` | .NET (wraps the standard Win32 `ChooseColor` common dialog) | Same picker used by MS Paint, Word, etc.; no custom color-parsing beyond a `#RRGGBB` hex round-trip. |
 
 None of the above requires a driver, administrator rights, or any undocumented/private
 API. GPU utilization deliberately avoids DXGI/D3DKMT COM interop in favor of the
 performance-counter surface, which is public, stable, and already used by Task Manager
 itself.
+
+## About the mouse hook
+
+The Settings window closes when you click anywhere outside it (like a Windows 11
+flyout). That's implemented with a low-level mouse hook
+(`Native/MouseHookInterop.cs` + `Windows/SettingsWindow.xaml.cs`), which is worth
+being explicit about since "global mouse hook" can sound alarming out of context:
+
+- It's `WH_MOUSE_LL`, not `WH_KEYBOARD_LL` — it only ever sees mouse button-down
+  events and their screen coordinates, never keystrokes, never window contents,
+  never clipboard data.
+- It's a **low-level** hook, which runs entirely in this process's own thread — unlike
+  the older `WH_MOUSE` hook type, it does not require (and this code does not do)
+  injecting a DLL into any other process.
+- On every event it does exactly one thing: compare the click's (x, y) against the
+  Settings window's own rectangle, and close the window if the click fell outside it.
+  Nothing is logged, stored, or transmitted — you can verify this by reading
+  `HookCallback` in `SettingsWindow.xaml.cs`, which is the entire implementation.
+- It always calls `CallNextHookEx` before returning, so it never blocks, delays, or
+  alters mouse input for any other application.
+- It is installed only while the Settings window is open and removed the instant it
+  closes (`Loaded`/`Closed` handlers) — it does not run for the rest of the app's
+  lifetime.
+
+## Settings file integrity
+
+`%LOCALAPPDATA%\SystemMonitor\settings.json` is plain, human-editable JSON with no
+signing/integrity check — by design, since it holds no secrets and this is a local,
+single-user config file (the same trust model as any other app's local settings).
+Loading it validates every field against its known-valid range (interval/history
+presets, overlay scale bounds, enum values) and replaces anything out of range with a
+safe default, rather than trusting the file blindly — a hand-edited or corrupted file
+degrades gracefully instead of crashing the app or rendering a broken UI (see
+`SettingsService.Sanitize` and `SettingsServiceTests` for the exact cases covered).
 
 ## If a metric can't be read safely
 

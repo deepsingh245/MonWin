@@ -62,6 +62,44 @@ public class SettingsServiceTests : IDisposable
         Assert.False(loaded.ShowGpu);
     }
 
+    [Fact]
+    public void Load_OutOfRangeUpdateInterval_FallsBackToValidDefault()
+    {
+        // A hand-edited or tampered settings.json with e.g. UpdateIntervalMs=0 or negative
+        // would otherwise crash System.Threading.Timer's constructor on startup — this must
+        // never reach that far.
+        var path = Path.Combine(_tempDir, "bad-interval.json");
+        File.WriteAllText(path, """{ "UpdateIntervalMs": -50 }""");
+
+        var settings = SettingsService.Load(path, _logger);
+
+        Assert.Contains(settings.UpdateIntervalMs, AppSettings.ValidUpdateIntervalsMs);
+    }
+
+    [Fact]
+    public void Load_OutOfRangeOverlayScale_ClampsToValidRange()
+    {
+        var path = Path.Combine(_tempDir, "bad-scale.json");
+        File.WriteAllText(path, """{ "OverlayScale": 999.0 }""");
+
+        var settings = SettingsService.Load(path, _logger);
+
+        Assert.InRange(settings.OverlayScale, AppSettings.MinOverlayScale, AppSettings.MaxOverlayScale);
+    }
+
+    [Fact]
+    public void Load_OutOfRangeEnumValues_FallBackToDefaults()
+    {
+        var path = Path.Combine(_tempDir, "bad-enums.json");
+        File.WriteAllText(path, """{ "DisplayMode": 999, "Position": -1, "Theme": 42 }""");
+
+        var settings = SettingsService.Load(path, _logger);
+
+        Assert.True(Enum.IsDefined(settings.DisplayMode));
+        Assert.True(Enum.IsDefined(settings.Position));
+        Assert.True(Enum.IsDefined(settings.Theme));
+    }
+
     public void Dispose()
     {
         try { Directory.Delete(_tempDir, recursive: true); } catch { /* best-effort cleanup */ }

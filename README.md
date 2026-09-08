@@ -1,8 +1,9 @@
 # MonWin — Windows 11 System Monitor
 
-A small, native, Windows-11-styled system monitor for CPU, RAM, and GPU usage, anchored
-near the taskbar. Built to be a safe, user-mode alternative to tools that rely on
-kernel drivers (WinRing0, OpenHardwareMonitor/LibreHardwareMonitor drivers, etc.).
+A small, native, Windows-11-styled system monitor for CPU, RAM, and GPU usage that sits
+directly on your taskbar. A safe, user-mode alternative to tools that rely on kernel
+drivers (WinRing0, OpenHardwareMonitor/LibreHardwareMonitor drivers, etc.) — see
+[Security model](#security-model) below.
 
 ```
 CPU 32%  ▁▂▃▅▃▂    RAM 49%  ▃▄▃▄▅    GPU 1%  ▁▁▁▂▁
@@ -13,14 +14,16 @@ CPU 32%  ▁▂▃▅▃▂    RAM 49%  ▃▄▃▄▅    GPU 1%  ▁▁▁▂�
 - Live CPU (% + frequency), RAM (% + used/total), and GPU (% + memory) with rolling
   sparkline history (30/60/120/300s, configurable).
 - Compact, Compact+Graph, and Detailed display modes.
-- Taskbar-adjacent overlay (Left/Center/Right, or a custom position) or a floating
-  window if the taskbar can't be located.
-- Follows Windows light/dark theme, or set it manually.
+- Sits directly on the taskbar (Left/Center/Right, or a custom position you drag it
+  to); falls back to a floating window if the taskbar can't be located.
+- Follows Windows light/dark theme, or set it manually; customizable accent color via
+  quick presets or the native Windows color picker.
 - Left-click for the detailed view, right-click for settings, middle-click to
   hide/show, optional click-through mode.
-- Drag the overlay to move it anywhere (remembers the drop spot as a Custom position);
-  drag the small corner grip to resize the whole card (double-click the grip to reset).
-- Customizable accent color — quick presets or the native Windows color picker.
+- Drag the overlay to move it anywhere (remembers the drop spot); drag the small
+  corner grip to resize the whole card (double-click the grip to reset).
+- Settings opens as a light-dismiss flyout — click anywhere outside it to close, no
+  button required.
 - System tray icon; closing the detailed view does not stop monitoring.
 - Local JSON settings, local rotating log file, zero network access.
 
@@ -37,7 +40,7 @@ Portable — no installer:
 
 1. Download or build `publish\SystemMonitor.exe` (see BUILD.md).
 2. Run it. It starts monitoring immediately with CPU+RAM+GPU in Compact+Graph mode,
-   positioned near the taskbar.
+   sitting on the taskbar.
 3. Right-click the overlay (or the tray icon) for Settings, including "Start with
    Windows".
 
@@ -77,9 +80,10 @@ directly into the real taskbar, and its taskbar only supports the bottom edge (n
 top/left/right, unlike older Windows versions) — see
 [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md#windows-11-taskbar-position-leftcenterright)
 for what that means for the Left/Center/Right setting. MonWin instead renders its own
-small always-on-top window anchored just above the taskbar, tracking taskbar
-geometry, DPI, and Explorer restarts. See
-[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#taskbar-tracking) for how.
+small always-on-top window sized to fit directly on the taskbar (falling back to
+floating just above it, or in a screen corner if the taskbar can't be found at all),
+tracking taskbar geometry, DPI, and Explorer restarts. See
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#taskbar-tracking-and-positioning) for how.
 
 ## Security model
 
@@ -110,27 +114,30 @@ hardware.
 dotnet test SystemMonitor.sln -c Release
 ```
 
-31 tests: CPU delta-based usage math, memory percentage/used/available math, rolling
+46 tests: CPU delta-based usage math, memory percentage/used/available math, rolling
 history buffer behavior (capacity, drop-oldest, resize), settings load/save/corruption
-recovery, GPU aggregation (max-not-sum across engines, auto-select vs. explicit
-adapter, unavailable states), and startup-registry enable/disable round-tripping.
+recovery and field-level validation, taskbar-overlay positioning math (on-taskbar
+centering, floating fallback, Custom positioning), GPU aggregation (max-not-sum across
+engines, auto-select vs. explicit adapter, unavailable states), and startup-registry
+enable/disable round-tripping.
 
 ## Packaging
 
-Current v1 distribution is a portable, self-contained, single-file `.exe`
-(`scripts\publish.ps1` + `scripts\package.ps1`). MSIX was considered and intentionally
-deferred — see [docs/BUILD.md](docs/BUILD.md#installation-current-v1-approach-portable)
-for why.
+MonWin ships as a portable, self-contained, single-file `.exe`
+(`scripts\publish.ps1` + `scripts\package.ps1`) — no installer required. MSIX was
+considered and intentionally skipped — see
+[docs/BUILD.md](docs/BUILD.md#installation-portable) for why.
 
 ## Known limitations
 
 - True native taskbar embedding is not possible on Windows 11 through supported APIs;
-  MonWin uses a taskbar-adjacent overlay instead (by design — see Security model).
+  MonWin renders its own window sized to fit on the taskbar instead (by design — see
+  Security model).
 - GPU total VRAM can show "Unknown" on some >4GB cards due to a WMI/driver reporting
   limitation, not a MonWin bug (docs/TROUBLESHOOTING.md).
 - Multi-GPU adapter-to-name correlation is best-effort (docs/ARCHITECTURE.md).
-- Network/disk metrics are modeled (`Models/NetworkMetrics.cs`) but not implemented in
-  v1 — reserved, disabled in Settings.
+- Network/disk metrics are modeled (`Models/NetworkMetrics.cs`) but not implemented
+  yet — reserved, disabled in Settings, for a future release.
 
 ## License
 
