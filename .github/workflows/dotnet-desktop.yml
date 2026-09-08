@@ -1,0 +1,35 @@
+name: .NET Desktop
+
+# Runs on every push/PR against main: restores, builds (Release), and runs the test
+# suite on a Windows runner (required — this is a WPF/WinForms app targeting
+# net8.0-windows, which cannot build on Linux/macOS runners).
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+  # Lets you trigger a run manually from the Actions tab without needing a push.
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore SystemMonitor.sln
+
+      - name: Build (Release)
+        run: dotnet build SystemMonitor.sln -c Release --no-restore
+
+      - name: Test
+        run: dotnet test SystemMonitor.sln -c Release --no-build --verbosity normal
