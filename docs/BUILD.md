@@ -26,9 +26,10 @@ Equivalent to `dotnet restore` + `dotnet build -c Release`.
 dotnet test SystemMonitor.sln -c Release
 ```
 
-31 tests cover CPU delta math, memory percentage math, rolling-history buffer behavior,
-settings load/save/corruption-recovery, GPU aggregation logic (including the
-"unavailable" and multi-adapter cases), and startup-registry round-tripping.
+46 tests cover CPU delta math, memory percentage math, rolling-history buffer behavior,
+settings load/save/corruption-recovery and field-level validation, taskbar-overlay
+positioning math, GPU aggregation logic (including the "unavailable" and
+multi-adapter cases), and startup-registry round-tripping.
 
 ## Publish
 

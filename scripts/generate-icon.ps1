@@ -2,7 +2,7 @@
 .SYNOPSIS
     Generates Assets/app.ico: a small rounded-square glyph with ascending bars,
     matching the app's minimal Windows 11 aesthetic. Run once (or whenever the
-    icon design changes) — the output is committed as a binary asset.
+    icon design changes) - the output is committed as a binary asset.
 
     Uses System.Drawing's own Icon.Save (via Bitmap.GetHicon) rather than a
     hand-rolled ICO writer, since that's a well-tested path guaranteed to produce
