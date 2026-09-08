@@ -204,6 +204,24 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>Walks up from <paramref name="element"/> (stopping at CardBorder) looking
+    /// for a Button ancestor, so drag-to-move can exclude clicks on real buttons.</summary>
+    private bool HasAncestorButton(DependencyObject element)
+    {
+        var current = element;
+        while (current is not null && current != CardBorder)
+        {
+            if (current is System.Windows.Controls.Button)
+            {
+                return true;
+            }
+
+            current = VisualTreeHelper.GetParent(current);
+        }
+
+        return false;
+    }
+
     /// <summary>
     /// Distinguishes a plain click (opens Detailed) from a drag (moves the overlay).
     /// DragMove() blocks until the mouse button is released and only actually moves the
@@ -213,6 +231,15 @@ public partial class MainWindow : Window
     private void OnCardPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (_viewModel.Settings.ClickThrough)
+        {
+            return;
+        }
+
+        // PreviewMouseLeftButtonDown tunnels from CardBorder down to whatever was
+        // actually clicked, so without this check, clicking a button inside the card
+        // (e.g. the Detailed view's "✕" close button) would trigger DragMove() first
+        // and swallow the click before it ever reached the button.
+        if (e.OriginalSource is DependencyObject source && HasAncestorButton(source))
         {
             return;
         }
@@ -312,6 +339,8 @@ public partial class MainWindow : Window
     private void OnCloseDetailedClick(object sender, RoutedEventArgs e) => ShowOverlay();
 
     private void OnOpenDetailedClick(object sender, RoutedEventArgs e) => ShowDetailed();
+
+    private void OnShowCompactClick(object sender, RoutedEventArgs e) => ShowOverlay();
 
     private void OnOpenSettingsClick(object sender, RoutedEventArgs e) => (System.Windows.Application.Current as App)?.OpenSettings();
 

@@ -10,6 +10,7 @@
     <Window.ContextMenu>
         <ContextMenu>
             <MenuItem Header="Open Detailed View" Click="OnOpenDetailedClick" />
+            <MenuItem Header="Show Compact View" Click="OnShowCompactClick" />
             <MenuItem Header="Settings" Click="OnOpenSettingsClick" />
             <MenuItem Header="Pause Monitoring" Command="{Binding TogglePauseCommand}" IsCheckable="True" IsChecked="{Binding IsPaused, Mode=OneWay}" />
             <MenuItem Header="Start with Windows" Command="{Binding ToggleStartWithWindowsCommand}" IsCheckable="True" IsChecked="{Binding Settings.StartWithWindows, Mode=OneWay}" />

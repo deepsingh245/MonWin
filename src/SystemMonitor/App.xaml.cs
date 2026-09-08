@@ -153,6 +153,7 @@ public partial class App : Application
 
         var menu = new System.Windows.Forms.ContextMenuStrip();
         menu.Items.Add("Open Monitor", null, (_, _) => Dispatcher.Invoke(() => _mainWindow!.ShowDetailed()));
+        menu.Items.Add("Show Compact View", null, (_, _) => Dispatcher.Invoke(() => _mainWindow!.ShowOverlay()));
         menu.Items.Add("Settings", null, (_, _) => Dispatcher.Invoke(OpenSettings));
 
         var pauseItem = new System.Windows.Forms.ToolStripMenuItem("Pause Monitoring") { CheckOnClick = true };
