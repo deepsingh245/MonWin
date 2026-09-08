@@ -22,7 +22,6 @@ public partial class MainWindow : Window
     private static readonly uint TaskbarCreatedMessage = TaskbarInterop.RegisterWindowMessage("TaskbarCreated");
     private const int WM_DISPLAYCHANGE = 0x007E;
     private const int WM_DPICHANGED = 0x02E0;
-    private const int WM_SETTINGCHANGE = 0x001A;
 
     private bool _isVisible = true;
     private bool _suppressNextClick;
@@ -70,7 +69,12 @@ public partial class MainWindow : Window
 
     private nint WndProc(nint hwnd, int msg, nint wParam, nint lParam, ref bool handled)
     {
-        if (msg == (int)TaskbarCreatedMessage || msg is WM_DISPLAYCHANGE or WM_DPICHANGED or WM_SETTINGCHANGE)
+        // Deliberately narrow: WM_SETTINGCHANGE is broadcast for many unrelated system
+        // settings (not just display/taskbar layout) and re-querying the taskbar on every
+        // one of those caused visible positional jitter with no real trigger behind it.
+        // TaskbarCreated/WM_DISPLAYCHANGE/WM_DPICHANGED already cover every case that
+        // actually changes taskbar geometry.
+        if (msg == (int)TaskbarCreatedMessage || msg is WM_DISPLAYCHANGE or WM_DPICHANGED)
         {
             Dispatcher.BeginInvoke(RepositionWindow);
         }
