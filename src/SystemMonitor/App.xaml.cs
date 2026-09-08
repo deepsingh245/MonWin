@@ -15,6 +15,7 @@ public partial class App : Application
     private System.Windows.Forms.NotifyIcon? _trayIcon;
     private Mutex? _singleInstanceMutex;
     private MainWindow? _mainWindow;
+    private SettingsWindow? _settingsWindow;
     private ILoggingService? _logger;
 
     protected override void OnStartup(StartupEventArgs e)
@@ -189,15 +190,28 @@ public partial class App : Application
 
     internal void OpenSettings()
     {
-        var window = _services!.GetRequiredService<SettingsWindow>();
-        window.Owner = _mainWindow;
-        window.ShowDialog();
+        if (_settingsWindow is { IsVisible: true })
+        {
+            _settingsWindow.Activate();
+            return;
+        }
+
+        // Non-modal + owned: closes on click-outside (see SettingsWindow.OnDeactivated)
+        // like a Windows 11 flyout, rather than blocking the app until a button is clicked.
+        _mainWindow?.SetTopmostReassertionSuspended(true);
+        _settingsWindow = _services!.GetRequiredService<SettingsWindow>();
+        _settingsWindow.Owner = _mainWindow;
+        _settingsWindow.Closed += (_, _) => _mainWindow?.SetTopmostReassertionSuspended(false);
+        _settingsWindow.Show();
+        _settingsWindow.Activate();
     }
 
     internal void OpenAbout()
     {
+        _mainWindow?.SetTopmostReassertionSuspended(true);
         var window = _services!.GetRequiredService<AboutWindow>();
         window.Owner = _mainWindow;
+        window.Closed += (_, _) => _mainWindow?.SetTopmostReassertionSuspended(false);
         window.ShowDialog();
     }
 

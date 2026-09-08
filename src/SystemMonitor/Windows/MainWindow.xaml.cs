@@ -26,6 +26,7 @@ public partial class MainWindow : Window
     private bool _isVisible = true;
     private bool _suppressNextClick;
     private DispatcherTimer? _topmostTimer;
+    private bool _topmostReassertionSuspended;
 
     // Corner-grip resize sensitivity: pixels of drag per 1.0 of scale change.
     private const double ResizeDragSensitivity = 150.0;
@@ -59,12 +60,27 @@ public partial class MainWindow : Window
         _topmostTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _topmostTimer.Tick += (_, _) =>
         {
-            if (IsVisible)
+            if (IsVisible && !_topmostReassertionSuspended)
             {
                 SetTopmost();
             }
         };
         _topmostTimer.Start();
+    }
+
+    /// <summary>
+    /// Settings/About are owned, topmost windows too (same base style), but our own
+    /// periodic topmost re-assertion (above) would otherwise re-elevate this window
+    /// above them every second, burying a dialog the user just opened. Call this around
+    /// showing/closing such a dialog.
+    /// </summary>
+    public void SetTopmostReassertionSuspended(bool suspended)
+    {
+        _topmostReassertionSuspended = suspended;
+        if (!suspended && IsVisible)
+        {
+            SetTopmost();
+        }
     }
 
     private nint WndProc(nint hwnd, int msg, nint wParam, nint lParam, ref bool handled)
@@ -163,6 +179,15 @@ public partial class MainWindow : Window
 
     private void SetTopmost()
     {
+        // Checked here (not just in the timer tick) because ShowOverlay()/ShowDetailed()
+        // call this directly too — without the check here, clicking the card while
+        // Settings/About is open would immediately re-elevate this window above them,
+        // bypassing the suspend flag entirely.
+        if (_topmostReassertionSuspended)
+        {
+            return;
+        }
+
         var hwnd = new WindowInteropHelper(this).Handle;
         if (hwnd != 0)
         {

@@ -65,6 +65,12 @@ public sealed class SettingsViewModel : ObservableObject
 
     public event EventHandler? RequestClose;
 
+    /// <summary>Raised around showing the native color picker, so the owning window can
+    /// suspend its click-outside-to-dismiss behavior — otherwise the color dialog
+    /// stealing focus would immediately close Settings before the user picks anything.</summary>
+    public event EventHandler? ExternalDialogOpening;
+    public event EventHandler? ExternalDialogClosed;
+
     public SettingsViewModel(ISettingsService settingsService, IStartupService startupService, IGpuMonitor gpuMonitor)
     {
         _settingsService = settingsService;
@@ -82,16 +88,24 @@ public sealed class SettingsViewModel : ObservableObject
 
     private void PickCustomColor()
     {
-        using var dialog = new System.Windows.Forms.ColorDialog { FullOpen = true };
-        if (!string.IsNullOrWhiteSpace(AccentColorHex) && TryParseHex(AccentColorHex, out var r, out var g, out var b))
+        ExternalDialogOpening?.Invoke(this, EventArgs.Empty);
+        try
         {
-            dialog.Color = System.Drawing.Color.FromArgb(r, g, b);
-        }
+            using var dialog = new System.Windows.Forms.ColorDialog { FullOpen = true };
+            if (!string.IsNullOrWhiteSpace(AccentColorHex) && TryParseHex(AccentColorHex, out var r, out var g, out var b))
+            {
+                dialog.Color = System.Drawing.Color.FromArgb(r, g, b);
+            }
 
-        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                var c = dialog.Color;
+                AccentColorHex = $"#{c.R:X2}{c.G:X2}{c.B:X2}";
+            }
+        }
+        finally
         {
-            var c = dialog.Color;
-            AccentColorHex = $"#{c.R:X2}{c.G:X2}{c.B:X2}";
+            ExternalDialogClosed?.Invoke(this, EventArgs.Empty);
         }
     }
 
