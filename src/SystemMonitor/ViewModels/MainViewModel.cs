@@ -18,9 +18,13 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     private CpuMetrics _cpu = CpuMetrics.Unavailable;
     private MemoryMetrics _memory = MemoryMetrics.Unavailable;
     private GpuMetrics _gpu = GpuMetrics.Unavailable;
+    private NetworkMetrics _network = NetworkMetrics.Unavailable;
+    private DiskMetrics _disk = DiskMetrics.Unavailable;
     private double[] _cpuHistory = [];
     private double[] _memoryHistory = [];
     private double[] _gpuHistory = [];
+    private double[] _networkHistory = [];
+    private double[] _diskHistory = [];
 
     public AppSettings Settings => _settingsService.Current;
 
@@ -54,6 +58,18 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         private set => SetProperty(ref _gpu, value);
     }
 
+    public NetworkMetrics Network
+    {
+        get => _network;
+        private set => SetProperty(ref _network, value);
+    }
+
+    public DiskMetrics Disk
+    {
+        get => _disk;
+        private set => SetProperty(ref _disk, value);
+    }
+
     public double[] CpuHistory
     {
         get => _cpuHistory;
@@ -72,6 +88,18 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         private set => SetProperty(ref _gpuHistory, value);
     }
 
+    public double[] NetworkHistory
+    {
+        get => _networkHistory;
+        private set => SetProperty(ref _networkHistory, value);
+    }
+
+    public double[] DiskHistory
+    {
+        get => _diskHistory;
+        private set => SetProperty(ref _diskHistory, value);
+    }
+
     public string CpuValueText => Cpu.IsAvailable ? $"{Cpu.UsagePercent:F0}%" : "N/A";
     public string CpuSecondaryText => Cpu.IsAvailable && Cpu.FrequencyMhz is { } mhz ? $"{mhz / 1000.0:F2} GHz" : string.Empty;
     public string ProcessorInfoText => Cpu.IsAvailable ? $"{Cpu.ProcessorName} · {Cpu.LogicalCoreCount} threads" : string.Empty;
@@ -84,6 +112,21 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         ? Gpu.TotalMemoryGigabytes is { } total ? $"{used:F2} / {total:F1} GB" : $"{used:F2} GB"
         : string.Empty;
     public string GpuName => Gpu.IsAvailable ? Gpu.Name : "N/A";
+
+    public string NetValueText => Network.IsAvailable
+        ? $"↓{RateFormatter.Format(Network.DownloadBytesPerSecond)} ↑{RateFormatter.Format(Network.UploadBytesPerSecond)}"
+        : "N/A";
+    public string NetTotalText => Network.IsAvailable
+        ? RateFormatter.Format(Network.DownloadBytesPerSecond + Network.UploadBytesPerSecond)
+        : "N/A";
+    public string NetSecondaryText => Network.IsAvailable
+        ? $"Down {RateFormatter.Format(Network.DownloadBytesPerSecond)} · Up {RateFormatter.Format(Network.UploadBytesPerSecond)}"
+        : string.Empty;
+
+    public string DiskValueText => Disk.IsAvailable ? $"{Disk.ActivePercent:F0}%" : "N/A";
+    public string DiskSecondaryText => Disk.IsAvailable
+        ? $"R {RateFormatter.Format(Disk.ReadBytesPerSecond)} · W {RateFormatter.Format(Disk.WriteBytesPerSecond)}"
+        : string.Empty;
 
     public RelayCommand ShowDetailedCommand { get; }
     public RelayCommand ShowOverlayCommand { get; }
@@ -171,9 +214,13 @@ public sealed class MainViewModel : ObservableObject, IDisposable
             Cpu = snapshot.Cpu;
             Memory = snapshot.Memory;
             Gpu = snapshot.Gpu;
+            Network = snapshot.Network;
+            Disk = snapshot.Disk;
             CpuHistory = _monitor.CpuHistory.ToArray();
             MemoryHistory = _monitor.MemoryHistory.ToArray();
             GpuHistory = _monitor.GpuHistory.ToArray();
+            NetworkHistory = _monitor.NetworkHistory.ToArray();
+            DiskHistory = _monitor.DiskHistory.ToArray();
 
             OnPropertyChanged(nameof(CpuValueText));
             OnPropertyChanged(nameof(CpuSecondaryText));
@@ -183,6 +230,11 @@ public sealed class MainViewModel : ObservableObject, IDisposable
             OnPropertyChanged(nameof(GpuValueText));
             OnPropertyChanged(nameof(GpuSecondaryText));
             OnPropertyChanged(nameof(GpuName));
+            OnPropertyChanged(nameof(NetValueText));
+            OnPropertyChanged(nameof(NetTotalText));
+            OnPropertyChanged(nameof(NetSecondaryText));
+            OnPropertyChanged(nameof(DiskValueText));
+            OnPropertyChanged(nameof(DiskSecondaryText));
         });
     }
 

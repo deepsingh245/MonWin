@@ -33,8 +33,8 @@
             <CheckBox Content="CPU" IsChecked="{Binding ShowCpu}" />
             <CheckBox Content="RAM" IsChecked="{Binding ShowRam}" />
             <CheckBox Content="GPU" IsChecked="{Binding ShowGpu}" />
-            <CheckBox Content="Network (reserved for a future release)" IsChecked="{Binding ShowNetwork}" IsEnabled="False" />
-            <CheckBox Content="Disk (reserved for a future release)" IsChecked="{Binding ShowDisk}" IsEnabled="False" />
+            <CheckBox Content="Network" IsChecked="{Binding ShowNetwork}" />
+            <CheckBox Content="Disk" IsChecked="{Binding ShowDisk}" />
 
             <TextBlock Text="Position" Margin="0,10,0,2" Foreground="{DynamicResource MonWin.SubtleForeground}" FontSize="11" />
             <RadioButton Content="Left" GroupName="Position"

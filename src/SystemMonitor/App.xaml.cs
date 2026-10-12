@@ -69,6 +69,9 @@ public partial class App : Application
         services.AddSingleton<IMemoryMonitor, MemoryMonitorService>();
         services.AddSingleton<IGpuDataSource, WindowsGpuDataSource>();
         services.AddSingleton<IGpuMonitor, GpuMonitorService>();
+        services.AddSingleton<INetworkMonitor, NetworkMonitorService>();
+        services.AddSingleton<IDiskDataSource, WindowsDiskDataSource>();
+        services.AddSingleton<IDiskMonitor, DiskMonitorService>();
         services.AddSingleton<ISystemMonitorService, SystemMonitorService>();
         services.AddSingleton<IStartupService, StartupService>();
         services.AddSingleton<ITaskbarService, TaskbarService>();

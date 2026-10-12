@@ -5,4 +5,6 @@ public sealed record MonitorSnapshot(
     DateTimeOffset Timestamp,
     CpuMetrics Cpu,
     MemoryMetrics Memory,
-    GpuMetrics Gpu);
+    GpuMetrics Gpu,
+    NetworkMetrics Network,
+    DiskMetrics Disk);

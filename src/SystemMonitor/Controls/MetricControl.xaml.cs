@@ -29,6 +29,14 @@ public partial class MetricControl : UserControl
     public static readonly DependencyProperty ShowGraphProperty = DependencyProperty.Register(
         nameof(ShowGraph), typeof(bool), typeof(MetricControl), new PropertyMetadata(true));
 
+    /// <summary>Sparkline scale ceiling. 100 for percentages; 0 auto-scales to the history's own max (for byte rates).</summary>
+    public static readonly DependencyProperty GraphMaxValueProperty = DependencyProperty.Register(
+        nameof(GraphMaxValue), typeof(double), typeof(MetricControl), new PropertyMetadata(100.0));
+
+    /// <summary>Minimum width of the compact value text, so wider values (e.g. network rates) don't make the overlay jitter.</summary>
+    public static readonly DependencyProperty ValueMinWidthProperty = DependencyProperty.Register(
+        nameof(ValueMinWidth), typeof(double), typeof(MetricControl), new PropertyMetadata(30.0));
+
     public string Label
     {
         get => (string)GetValue(LabelProperty);
@@ -63,6 +71,18 @@ public partial class MetricControl : UserControl
     {
         get => (bool)GetValue(ShowGraphProperty);
         set => SetValue(ShowGraphProperty, value);
+    }
+
+    public double GraphMaxValue
+    {
+        get => (double)GetValue(GraphMaxValueProperty);
+        set => SetValue(GraphMaxValueProperty, value);
+    }
+
+    public double ValueMinWidth
+    {
+        get => (double)GetValue(ValueMinWidthProperty);
+        set => SetValue(ValueMinWidthProperty, value);
     }
 
     public MetricControl()

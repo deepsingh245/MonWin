@@ -3,7 +3,7 @@ using SystemMonitor.Models;
 namespace SystemMonitor.Services;
 
 /// <summary>
-/// Orchestrates polling of CPU/RAM/GPU on a single background timer, maintains rolling
+/// Orchestrates polling of CPU/RAM/GPU/Network/Disk on a single background timer, maintains rolling
 /// history buffers sized from settings, and raises <see cref="SnapshotUpdated"/> on the
 /// thread the timer fires on — callers (ViewModels) marshal to the UI dispatcher
 /// themselves, keeping this class UI-framework-agnostic and testable.
@@ -13,6 +13,8 @@ public sealed class SystemMonitorService : ISystemMonitorService
     private readonly ICpuMonitor _cpuMonitor;
     private readonly IMemoryMonitor _memoryMonitor;
     private readonly IGpuMonitor _gpuMonitor;
+    private readonly INetworkMonitor _networkMonitor;
+    private readonly IDiskMonitor _diskMonitor;
     private readonly ISettingsService _settingsService;
     private readonly ILoggingService _logger;
     private readonly object _sync = new();
@@ -28,17 +30,23 @@ public sealed class SystemMonitorService : ISystemMonitorService
     public RollingHistory CpuHistory { get; private set; }
     public RollingHistory MemoryHistory { get; private set; }
     public RollingHistory GpuHistory { get; private set; }
+    public RollingHistory NetworkHistory { get; private set; }
+    public RollingHistory DiskHistory { get; private set; }
 
     public SystemMonitorService(
         ICpuMonitor cpuMonitor,
         IMemoryMonitor memoryMonitor,
         IGpuMonitor gpuMonitor,
+        INetworkMonitor networkMonitor,
+        IDiskMonitor diskMonitor,
         ISettingsService settingsService,
         ILoggingService logger)
     {
         _cpuMonitor = cpuMonitor;
         _memoryMonitor = memoryMonitor;
         _gpuMonitor = gpuMonitor;
+        _networkMonitor = networkMonitor;
+        _diskMonitor = diskMonitor;
         _settingsService = settingsService;
         _logger = logger;
 
@@ -48,6 +56,8 @@ public sealed class SystemMonitorService : ISystemMonitorService
         CpuHistory = new RollingHistory(capacity);
         MemoryHistory = new RollingHistory(capacity);
         GpuHistory = new RollingHistory(capacity);
+        NetworkHistory = new RollingHistory(capacity);
+        DiskHistory = new RollingHistory(capacity);
 
         _timer = new Timer(OnTick, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(_updateIntervalMs));
     }
@@ -66,6 +76,8 @@ public sealed class SystemMonitorService : ISystemMonitorService
                 CpuHistory.Resize(capacity);
                 MemoryHistory.Resize(capacity);
                 GpuHistory.Resize(capacity);
+                NetworkHistory.Resize(capacity);
+                DiskHistory.Resize(capacity);
             }
 
             if (settings.UpdateIntervalMs != _updateIntervalMs)
@@ -105,15 +117,19 @@ public sealed class SystemMonitorService : ISystemMonitorService
             var cpu = _cpuMonitor.Sample();
             var memory = _memoryMonitor.Sample();
             var gpu = _gpuMonitor.Sample(_settingsService.Current.SelectedGpuAdapterIndex);
+            var network = _networkMonitor.Sample();
+            var disk = _diskMonitor.Sample();
 
             lock (_sync)
             {
                 CpuHistory.Add(cpu.IsAvailable ? cpu.UsagePercent : 0);
                 MemoryHistory.Add(memory.IsAvailable ? memory.UsagePercent : 0);
                 GpuHistory.Add(gpu.IsAvailable ? gpu.UsagePercent ?? 0 : 0);
+                NetworkHistory.Add(network.IsAvailable ? network.DownloadBytesPerSecond + network.UploadBytesPerSecond : 0);
+                DiskHistory.Add(disk.IsAvailable ? disk.ActivePercent : 0);
             }
 
-            var snapshot = new MonitorSnapshot(DateTimeOffset.Now, cpu, memory, gpu);
+            var snapshot = new MonitorSnapshot(DateTimeOffset.Now, cpu, memory, gpu, network, disk);
             SnapshotUpdated?.Invoke(this, snapshot);
         }
         catch (Exception ex)
@@ -131,5 +147,6 @@ public sealed class SystemMonitorService : ISystemMonitorService
         _timer?.Dispose();
         _timer = null;
         (_gpuMonitor as IDisposable)?.Dispose();
+        (_diskMonitor as IDisposable)?.Dispose();
     }
 }

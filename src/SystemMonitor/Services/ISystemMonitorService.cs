@@ -14,5 +14,11 @@ public interface ISystemMonitorService : IDisposable
     RollingHistory MemoryHistory { get; }
     RollingHistory GpuHistory { get; }
 
+    /// <summary>Combined download + upload, in bytes/second.</summary>
+    RollingHistory NetworkHistory { get; }
+
+    /// <summary>Disk active time, in percent.</summary>
+    RollingHistory DiskHistory { get; }
+
     void ApplySettings(AppSettings settings);
 }

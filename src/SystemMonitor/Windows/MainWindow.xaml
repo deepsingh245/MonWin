@@ -39,8 +39,10 @@
         </Border.ToolTip>
 
         <Grid>
-            <!-- Compact / Compact+Graph overlay row -->
-            <StackPanel Orientation="Horizontal" x:Name="OverlayContent">
+            <!-- Compact / Compact+Graph overlay row. Every item carries a right margin and the
+                 panel cancels the last one, so whichever metrics are hidden there's never a
+                 stray trailing gap. -->
+            <StackPanel Orientation="Horizontal" x:Name="OverlayContent" Margin="0,0,-10,0">
                 <controls:MetricControl Label="CPU" ValueText="{Binding CpuValueText}"
                                          Values="{Binding CpuHistory}" IsCompact="True"
                                          ShowGraph="{Binding Settings.DisplayMode, Converter={StaticResource EnumEquals}, ConverterParameter=CompactGraph}"
@@ -54,7 +56,19 @@
                 <controls:MetricControl Label="GPU" ValueText="{Binding GpuValueText}"
                                          Values="{Binding GpuHistory}" IsCompact="True"
                                          ShowGraph="{Binding Settings.DisplayMode, Converter={StaticResource EnumEquals}, ConverterParameter=CompactGraph}"
-                                         Visibility="{Binding Settings.ShowGpu, Converter={StaticResource BoolToVisibility}}" />
+                                         Visibility="{Binding Settings.ShowGpu, Converter={StaticResource BoolToVisibility}}"
+                                         Margin="0,0,10,0" />
+                <controls:MetricControl Label="NET" ValueText="{Binding NetValueText}"
+                                         Values="{Binding NetworkHistory}" IsCompact="True" GraphMaxValue="0"
+                                         ValueMinWidth="120"
+                                         ShowGraph="{Binding Settings.DisplayMode, Converter={StaticResource EnumEquals}, ConverterParameter=CompactGraph}"
+                                         Visibility="{Binding Settings.ShowNetwork, Converter={StaticResource BoolToVisibility}}"
+                                         Margin="0,0,10,0" />
+                <controls:MetricControl Label="DISK" ValueText="{Binding DiskValueText}"
+                                         Values="{Binding DiskHistory}" IsCompact="True"
+                                         ShowGraph="{Binding Settings.DisplayMode, Converter={StaticResource EnumEquals}, ConverterParameter=CompactGraph}"
+                                         Visibility="{Binding Settings.ShowDisk, Converter={StaticResource BoolToVisibility}}"
+                                         Margin="0,0,10,0" />
             </StackPanel>
 
             <!-- Detailed presentation -->
@@ -89,6 +103,18 @@
                 <TextBlock Text="{Binding GpuName}" FontSize="10" Opacity="0.55"
                            Foreground="{DynamicResource MonWin.Foreground}" Margin="0,4,0,0"
                            Visibility="{Binding Settings.ShowGpu, Converter={StaticResource BoolToVisibility}}" />
+
+                <controls:MetricControl Label="Network" ValueText="{Binding NetTotalText}"
+                                         SecondaryText="{Binding NetSecondaryText}"
+                                         Values="{Binding NetworkHistory}" IsCompact="False" GraphMaxValue="0"
+                                         Visibility="{Binding Settings.ShowNetwork, Converter={StaticResource BoolToVisibility}}"
+                                         Margin="0,14,0,0" />
+
+                <controls:MetricControl Label="Disk" ValueText="{Binding DiskValueText}"
+                                         SecondaryText="{Binding DiskSecondaryText}"
+                                         Values="{Binding DiskHistory}" IsCompact="False"
+                                         Visibility="{Binding Settings.ShowDisk, Converter={StaticResource BoolToVisibility}}"
+                                         Margin="0,14,0,0" />
             </StackPanel>
         </Grid>
     </Border>
