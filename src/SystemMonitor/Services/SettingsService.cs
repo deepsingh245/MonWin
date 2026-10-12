@@ -33,6 +33,9 @@ public sealed class SettingsService : ISettingsService
     {
         try
         {
+            // UI-entered values (thresholds typed into text boxes) get the same validation
+            // as a hand-edited file, so nothing invalid is ever persisted or applied.
+            settings = Sanitize(settings);
             var json = JsonSerializer.Serialize(settings, JsonOptions);
             var tempPath = _settingsFilePath + ".tmp";
             File.WriteAllText(tempPath, json);
@@ -104,6 +107,19 @@ public sealed class SettingsService : ISettingsService
         {
             settings.Theme = AppTheme.System;
         }
+
+        if (!Enum.IsDefined(settings.NetworkUnit))
+        {
+            settings.NetworkUnit = NetworkUnit.Bytes;
+        }
+
+        (settings.CpuWarn, settings.CpuCrit) = ThresholdEvaluator.Normalize(settings.CpuWarn, settings.CpuCrit);
+        (settings.RamWarn, settings.RamCrit) = ThresholdEvaluator.Normalize(settings.RamWarn, settings.RamCrit);
+        (settings.GpuWarn, settings.GpuCrit) = ThresholdEvaluator.Normalize(settings.GpuWarn, settings.GpuCrit);
+        (settings.DiskWarn, settings.DiskCrit) = ThresholdEvaluator.Normalize(settings.DiskWarn, settings.DiskCrit);
+
+        // Null (a JSON "null") would break string handling downstream; empty means disabled.
+        settings.ToggleHotkey = settings.ToggleHotkey?.Trim() ?? string.Empty;
 
         return settings;
     }

@@ -9,5 +9,7 @@
     <SolidColorBrush x:Key="MonWin.Accent" Color="#0067C0" />
     <SolidColorBrush x:Key="MonWin.AccentFill" Color="#0067C0" Opacity="0.12" />
     <SolidColorBrush x:Key="MonWin.HoverBackground" Color="#E5E5E5" />
+    <SolidColorBrush x:Key="MonWin.Warning" Color="#9D5D00" />
+    <SolidColorBrush x:Key="MonWin.Critical" Color="#C42B1C" />
 
 </ResourceDictionary>

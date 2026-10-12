@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using SystemMonitor.Models;
 
 namespace SystemMonitor.Controls;
 
@@ -36,6 +37,10 @@ public partial class MetricControl : UserControl
     /// <summary>Minimum width of the compact value text, so wider values (e.g. network rates) don't make the overlay jitter.</summary>
     public static readonly DependencyProperty ValueMinWidthProperty = DependencyProperty.Register(
         nameof(ValueMinWidth), typeof(double), typeof(MetricControl), new PropertyMetadata(30.0));
+
+    /// <summary>Threshold state; Warning/Critical recolor the value and sparkline (see MetricControl.xaml).</summary>
+    public static readonly DependencyProperty SeverityProperty = DependencyProperty.Register(
+        nameof(Severity), typeof(MetricSeverity), typeof(MetricControl), new PropertyMetadata(MetricSeverity.Normal));
 
     public string Label
     {
@@ -83,6 +88,12 @@ public partial class MetricControl : UserControl
     {
         get => (double)GetValue(ValueMinWidthProperty);
         set => SetValue(ValueMinWidthProperty, value);
+    }
+
+    public MetricSeverity Severity
+    {
+        get => (MetricSeverity)GetValue(SeverityProperty);
+        set => SetValue(SeverityProperty, value);
     }
 
     public MetricControl()

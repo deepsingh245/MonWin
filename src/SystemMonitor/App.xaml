@@ -14,6 +14,7 @@
             <converters:EnumEqualsConverter x:Key="EnumEquals" />
             <converters:NullableToUnavailableTextConverter x:Key="NullableToUnavailableText" />
             <converters:StringNotEmptyToVisibilityConverter x:Key="StringNotEmptyToVisibility" />
+            <converters:CompactGraphVisibleConverter x:Key="CompactGraphVisible" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

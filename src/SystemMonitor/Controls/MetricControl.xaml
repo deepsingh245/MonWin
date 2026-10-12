@@ -3,6 +3,39 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:SystemMonitor.Controls"
              x:Name="Root">
+    <UserControl.Resources>
+        <!-- Warning/Critical severity swaps the value and graph color; Normal keeps each
+             element's usual brush (accent for compact text and graphs, foreground for the
+             big detailed number). -->
+        <Style x:Key="SeverityText" TargetType="TextBlock">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Severity, RelativeSource={RelativeSource AncestorType=controls:MetricControl}}" Value="Warning">
+                    <Setter Property="Foreground" Value="{DynamicResource MonWin.Warning}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Severity, RelativeSource={RelativeSource AncestorType=controls:MetricControl}}" Value="Critical">
+                    <Setter Property="Foreground" Value="{DynamicResource MonWin.Critical}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="CompactValueText" TargetType="TextBlock" BasedOn="{StaticResource SeverityText}">
+            <Setter Property="Foreground" Value="{DynamicResource MonWin.Accent}" />
+        </Style>
+        <Style x:Key="DetailedValueText" TargetType="TextBlock" BasedOn="{StaticResource SeverityText}">
+            <Setter Property="Foreground" Value="{DynamicResource MonWin.Foreground}" />
+        </Style>
+        <Style x:Key="SeveritySparkline" TargetType="controls:SparklineControl">
+            <Setter Property="LineBrush" Value="{DynamicResource MonWin.Accent}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Severity, RelativeSource={RelativeSource AncestorType=controls:MetricControl}}" Value="Warning">
+                    <Setter Property="LineBrush" Value="{DynamicResource MonWin.Warning}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Severity, RelativeSource={RelativeSource AncestorType=controls:MetricControl}}" Value="Critical">
+                    <Setter Property="LineBrush" Value="{DynamicResource MonWin.Critical}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
     <Grid>
         <!-- Compact / Compact+Graph: single horizontal row -->
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -21,13 +54,13 @@
                        Foreground="{DynamicResource MonWin.Foreground}"
                        VerticalAlignment="Center" Margin="0,0,4,0" />
             <TextBlock Text="{Binding ValueText, ElementName=Root}"
+                       Style="{StaticResource CompactValueText}"
                        FontSize="11" FontWeight="SemiBold"
-                       Foreground="{DynamicResource MonWin.Accent}"
                        VerticalAlignment="Center" MinWidth="{Binding ValueMinWidth, ElementName=Root}" />
             <controls:SparklineControl Values="{Binding Values, ElementName=Root}"
                                         MaxValue="{Binding GraphMaxValue, ElementName=Root}"
+                                        Style="{StaticResource SeveritySparkline}"
                                         Width="42" Height="16" Margin="4,0,0,0"
-                                        LineBrush="{DynamicResource MonWin.Accent}"
                                         Visibility="{Binding ShowGraph, ElementName=Root, Converter={StaticResource BoolToVisibility}}" />
         </StackPanel>
 
@@ -47,16 +80,16 @@
                        FontSize="12" FontWeight="SemiBold" Opacity="0.7"
                        Foreground="{DynamicResource MonWin.Foreground}" />
             <TextBlock Text="{Binding ValueText, ElementName=Root}"
-                       FontSize="26" FontWeight="Bold"
-                       Foreground="{DynamicResource MonWin.Foreground}" Margin="0,2,0,2" />
+                       Style="{StaticResource DetailedValueText}"
+                       FontSize="26" FontWeight="Bold" Margin="0,2,0,2" />
             <TextBlock Text="{Binding SecondaryText, ElementName=Root}"
                        FontSize="11" Opacity="0.65"
                        Foreground="{DynamicResource MonWin.Foreground}"
                        Visibility="{Binding SecondaryText, ElementName=Root, Converter={StaticResource StringNotEmptyToVisibility}}" />
             <controls:SparklineControl Values="{Binding Values, ElementName=Root}"
                                         MaxValue="{Binding GraphMaxValue, ElementName=Root}"
+                                        Style="{StaticResource SeveritySparkline}"
                                         Width="220" Height="36" Margin="0,6,0,0"
-                                        LineBrush="{DynamicResource MonWin.Accent}"
                                         FillBrush="{DynamicResource MonWin.AccentFill}" />
         </StackPanel>
     </Grid>

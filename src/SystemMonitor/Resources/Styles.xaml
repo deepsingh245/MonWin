@@ -81,4 +81,54 @@
         <Setter Property="BorderThickness" Value="1" />
     </Style>
 
+    <Style x:Key="MonWin.FieldLabel" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="{DynamicResource MonWin.SubtleForeground}" />
+        <Setter Property="Margin" Value="0,8,0,2" />
+    </Style>
+
+    <!-- Flat, theme-aware tabs (the stock TabControl is a Win7-style white box that ignores
+         dark mode): plain text headers with an accent underline on the selected one. -->
+    <Style TargetType="TabControl">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TabControl">
+                    <DockPanel>
+                        <Border DockPanel.Dock="Top" BorderBrush="{DynamicResource MonWin.Border}" BorderThickness="0,0,0,1" Margin="0,0,0,8">
+                            <TabPanel IsItemsHost="True" />
+                        </Border>
+                        <ContentPresenter ContentSource="SelectedContent" />
+                    </DockPanel>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="TabItem">
+        <Setter Property="Foreground" Value="{DynamicResource MonWin.SubtleForeground}" />
+        <Setter Property="FontFamily" Value="{StaticResource MonWin.Font}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TabItem">
+                    <Border x:Name="Underline" BorderThickness="0,0,0,2" BorderBrush="Transparent" Padding="8,6" Background="Transparent">
+                        <ContentPresenter ContentSource="Header" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Underline" Property="BorderBrush" Value="{DynamicResource MonWin.Accent}" />
+                            <Setter Property="Foreground" Value="{DynamicResource MonWin.Foreground}" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Foreground" Value="{DynamicResource MonWin.Foreground}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
 </ResourceDictionary>

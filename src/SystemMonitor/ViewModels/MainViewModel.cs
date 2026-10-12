@@ -1,4 +1,5 @@
 using System.Windows.Threading;
+using static System.FormattableString;
 using SystemMonitor.Models;
 using SystemMonitor.Services;
 using SystemMonitor.ViewModels.Base;
@@ -100,33 +101,68 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         private set => SetProperty(ref _diskHistory, value);
     }
 
-    public string CpuValueText => Cpu.IsAvailable ? $"{Cpu.UsagePercent:F0}%" : "N/A";
-    public string CpuSecondaryText => Cpu.IsAvailable && Cpu.FrequencyMhz is { } mhz ? $"{mhz / 1000.0:F2} GHz" : string.Empty;
-    public string ProcessorInfoText => Cpu.IsAvailable ? $"{Cpu.ProcessorName} · {Cpu.LogicalCoreCount} threads" : string.Empty;
+    // All display strings use the invariant culture so the compact bar's width (and the
+    // decimal separator) never changes with the user's regional settings.
+    public string CpuValueText => Cpu.IsAvailable ? Invariant($"{Cpu.UsagePercent:F0}%") : "N/A";
+    public string CpuSecondaryText => Cpu.IsAvailable && Cpu.FrequencyMhz is { } mhz ? Invariant($"{mhz / 1000.0:F2} GHz") : string.Empty;
+    public string ProcessorInfoText => Cpu.IsAvailable ? Invariant($"{Cpu.ProcessorName} · {Cpu.LogicalCoreCount} threads") : string.Empty;
 
-    public string RamValueText => Memory.IsAvailable ? $"{Memory.UsagePercent:F0}%" : "N/A";
-    public string RamSecondaryText => Memory.IsAvailable ? $"{Memory.UsedGigabytes:F1} / {Memory.TotalGigabytes:F1} GB" : string.Empty;
+    public string RamValueText => Memory.IsAvailable ? Invariant($"{Memory.UsagePercent:F0}%") : "N/A";
+    public string RamSecondaryText => Memory.IsAvailable ? Invariant($"{Memory.UsedGigabytes:F1} / {Memory.TotalGigabytes:F1} GB") : string.Empty;
 
-    public string GpuValueText => Gpu.IsAvailable && Gpu.UsagePercent is { } pct ? $"{pct:F0}%" : "N/A";
+    public string GpuValueText => Gpu.IsAvailable && Gpu.UsagePercent is { } pct ? Invariant($"{pct:F0}%") : "N/A";
     public string GpuSecondaryText => Gpu.IsAvailable && Gpu.UsedMemoryGigabytes is { } used
-        ? Gpu.TotalMemoryGigabytes is { } total ? $"{used:F2} / {total:F1} GB" : $"{used:F2} GB"
+        ? Gpu.TotalMemoryGigabytes is { } total ? Invariant($"{used:F2} / {total:F1} GB") : Invariant($"{used:F2} GB")
         : string.Empty;
     public string GpuName => Gpu.IsAvailable ? Gpu.Name : "N/A";
 
+    private bool NetInBits => Settings.NetworkUnit == NetworkUnit.Bits;
+    private string Rate(double bytesPerSecond) => RateFormatter.Format(bytesPerSecond, NetInBits);
+
     public string NetValueText => Network.IsAvailable
-        ? $"↓{RateFormatter.Format(Network.DownloadBytesPerSecond)} ↑{RateFormatter.Format(Network.UploadBytesPerSecond)}"
+        ? $"↓{Rate(Network.DownloadBytesPerSecond)} ↑{Rate(Network.UploadBytesPerSecond)}"
         : "N/A";
     public string NetTotalText => Network.IsAvailable
-        ? RateFormatter.Format(Network.DownloadBytesPerSecond + Network.UploadBytesPerSecond)
+        ? Rate(Network.DownloadBytesPerSecond + Network.UploadBytesPerSecond)
         : "N/A";
     public string NetSecondaryText => Network.IsAvailable
-        ? $"Down {RateFormatter.Format(Network.DownloadBytesPerSecond)} · Up {RateFormatter.Format(Network.UploadBytesPerSecond)}"
+        ? $"Down {Rate(Network.DownloadBytesPerSecond)} · Up {Rate(Network.UploadBytesPerSecond)}"
         : string.Empty;
 
-    public string DiskValueText => Disk.IsAvailable ? $"{Disk.ActivePercent:F0}%" : "N/A";
+    public string DiskValueText => Disk.IsAvailable ? Invariant($"{Disk.ActivePercent:F0}%") : "N/A";
     public string DiskSecondaryText => Disk.IsAvailable
         ? $"R {RateFormatter.Format(Disk.ReadBytesPerSecond)} · W {RateFormatter.Format(Disk.WriteBytesPerSecond)}"
         : string.Empty;
+
+    public MetricSeverity CpuSeverity =>
+        ThresholdEvaluator.Evaluate(Cpu.IsAvailable ? Cpu.UsagePercent : null, Settings.CpuWarn, Settings.CpuCrit);
+    public MetricSeverity RamSeverity =>
+        ThresholdEvaluator.Evaluate(Memory.IsAvailable ? Memory.UsagePercent : null, Settings.RamWarn, Settings.RamCrit);
+    public MetricSeverity GpuSeverity =>
+        ThresholdEvaluator.Evaluate(Gpu.IsAvailable ? Gpu.UsagePercent : null, Settings.GpuWarn, Settings.GpuCrit);
+    public MetricSeverity DiskSeverity =>
+        ThresholdEvaluator.Evaluate(Disk.IsAvailable ? Disk.ActivePercent : null, Settings.DiskWarn, Settings.DiskCrit);
+
+    /// <summary>Hover summary of every enabled metric, so the details are a glance away without opening the detailed view.</summary>
+    public string TooltipText
+    {
+        get
+        {
+            var s = Settings;
+            var lines = new List<string>();
+            if (s.ShowCpu) lines.Add(Line("CPU", CpuValueText, CpuSecondaryText));
+            if (s.ShowRam) lines.Add(Line("RAM", RamValueText, RamSecondaryText));
+            if (s.ShowGpu) lines.Add(Line("GPU", GpuValueText, Gpu.IsAvailable ? $"{GpuSecondaryText} · {Gpu.Name}".Trim(' ', '·') : string.Empty));
+            if (s.ShowNetwork) lines.Add(Line("Network", NetTotalText, NetSecondaryText));
+            if (s.ShowDisk) lines.Add(Line("Disk", DiskValueText, DiskSecondaryText));
+            lines.Add(string.Empty);
+            lines.Add("Click: details · Right-click: menu · Drag: move · Corner grip: resize");
+            return string.Join(Environment.NewLine, lines);
+
+            static string Line(string label, string value, string secondary) =>
+                string.IsNullOrEmpty(secondary) ? $"{label}  {value}" : $"{label}  {value}   ({secondary})";
+        }
+    }
 
     public RelayCommand ShowDetailedCommand { get; }
     public RelayCommand ShowOverlayCommand { get; }
@@ -151,6 +187,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         {
             _monitor.ApplySettings(settings);
             OnPropertyChanged(nameof(Settings));
+            RaiseSettingsDependentProperties();
         };
 
         ShowDetailedCommand = new RelayCommand(() => IsDetailed = true);
@@ -230,12 +267,23 @@ public sealed class MainViewModel : ObservableObject, IDisposable
             OnPropertyChanged(nameof(GpuValueText));
             OnPropertyChanged(nameof(GpuSecondaryText));
             OnPropertyChanged(nameof(GpuName));
-            OnPropertyChanged(nameof(NetValueText));
-            OnPropertyChanged(nameof(NetTotalText));
-            OnPropertyChanged(nameof(NetSecondaryText));
             OnPropertyChanged(nameof(DiskValueText));
             OnPropertyChanged(nameof(DiskSecondaryText));
+            RaiseSettingsDependentProperties();
         });
+    }
+
+    /// <summary>Properties computed from both the latest snapshot and the settings (thresholds, units, visibility).</summary>
+    private void RaiseSettingsDependentProperties()
+    {
+        OnPropertyChanged(nameof(NetValueText));
+        OnPropertyChanged(nameof(NetTotalText));
+        OnPropertyChanged(nameof(NetSecondaryText));
+        OnPropertyChanged(nameof(CpuSeverity));
+        OnPropertyChanged(nameof(RamSeverity));
+        OnPropertyChanged(nameof(GpuSeverity));
+        OnPropertyChanged(nameof(DiskSeverity));
+        OnPropertyChanged(nameof(TooltipText));
     }
 
     public void Dispose()

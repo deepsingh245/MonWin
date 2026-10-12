@@ -46,6 +46,10 @@ public partial class App : Application
 
         _mainWindow = _services.GetRequiredService<MainWindow>();
 
+        // Create the HWND now even if the overlay starts hidden, so the global hotkey
+        // (registered in MainWindow.OnSourceInitialized) works from the moment we launch.
+        new System.Windows.Interop.WindowInteropHelper(_mainWindow).EnsureHandle();
+
         var settings = _services.GetRequiredService<ISettingsService>().Current;
         // Only the user's "Start minimized" setting hides the overlay. The old startup
         // registry entry passed --minimized, which is deliberately ignored now so the
@@ -76,6 +80,7 @@ public partial class App : Application
         services.AddSingleton<IStartupService, StartupService>();
         services.AddSingleton<ITaskbarService, TaskbarService>();
         services.AddSingleton<IThemeService, ThemeService>();
+        services.AddSingleton<IHotkeyService, HotkeyService>();
         services.AddSingleton(_ => Dispatcher.CurrentDispatcher);
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<MainWindow>();
@@ -183,14 +188,56 @@ public partial class App : Application
         menu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
         menu.Items.Add("Exit", null, (_, _) => Dispatcher.Invoke(ExitApplication));
 
+        _defaultTrayIcon = System.Drawing.Icon.ExtractAssociatedIcon(Environment.ProcessPath ?? "SystemMonitor.exe");
         _trayIcon = new System.Windows.Forms.NotifyIcon
         {
-            Icon = System.Drawing.Icon.ExtractAssociatedIcon(Environment.ProcessPath ?? "SystemMonitor.exe"),
+            Icon = _defaultTrayIcon,
             Visible = true,
-            Text = "MonWin System Monitor",
+            Text = DefaultTrayText,
             ContextMenuStrip = menu,
         };
         _trayIcon.DoubleClick += (_, _) => Dispatcher.Invoke(() => _mainWindow!.ShowDetailed());
+
+        monitor.SnapshotUpdated += (_, snapshot) => Dispatcher.BeginInvoke(() => UpdateTrayIcon(snapshot));
+        settingsService.SettingsChanged += (_, settings) => Dispatcher.BeginInvoke(() =>
+        {
+            if (!settings.TrayShowsCpu && _trayIcon is not null)
+            {
+                _trayIcon.Icon = _defaultTrayIcon;
+                _trayRenderer.Dispose();
+            }
+        });
+    }
+
+    private const string DefaultTrayText = "MonWin System Monitor";
+    private System.Drawing.Icon? _defaultTrayIcon;
+    private readonly TrayIconRenderer _trayRenderer = new();
+    private DateTime _lastTrayUpdate = DateTime.MinValue;
+
+    /// <summary>
+    /// Keeps the tray tooltip current and, when enabled, redraws the live CPU % into the
+    /// icon. Throttled to once a second — at a 250 ms poll interval, re-rendering the icon
+    /// every tick is wasted GDI work the eye can't follow anyway.
+    /// </summary>
+    private void UpdateTrayIcon(Models.MonitorSnapshot snapshot)
+    {
+        if (_trayIcon is null || DateTime.UtcNow - _lastTrayUpdate < TimeSpan.FromSeconds(1))
+        {
+            return;
+        }
+
+        _lastTrayUpdate = DateTime.UtcNow;
+        var cpu = snapshot.Cpu.IsAvailable ? (int)Math.Round(snapshot.Cpu.UsagePercent) : (int?)null;
+        var ram = snapshot.Memory.IsAvailable ? (int)Math.Round(snapshot.Memory.UsagePercent) : (int?)null;
+        _trayIcon.Text = cpu is null && ram is null
+            ? DefaultTrayText
+            : $"MonWin — CPU {cpu?.ToString() ?? "N/A"}% · RAM {ram?.ToString() ?? "N/A"}%";
+
+        var settings = _services!.GetRequiredService<ISettingsService>().Current;
+        if (settings.TrayShowsCpu && cpu is { } value)
+        {
+            _trayIcon.Icon = _trayRenderer.Render(value);
+        }
     }
 
     internal void OpenSettings()
@@ -224,6 +271,7 @@ public partial class App : Application
     {
         _logger?.LogInfo("Application exiting.");
         _trayIcon?.Dispose();
+        _trayRenderer.Dispose();
         (_services?.GetService<ISystemMonitorService>())?.Dispose();
         Shutdown();
     }

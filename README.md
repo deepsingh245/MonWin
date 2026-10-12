@@ -1,18 +1,25 @@
 # MonWin — Windows 11 System Monitor
 
-A small, native, Windows-11-styled system monitor for CPU, RAM, and GPU usage that sits
-directly on your taskbar. A safe, user-mode alternative to tools that rely on kernel
+A small, native, Windows-11-styled system monitor for CPU, RAM, GPU, network, and disk
+usage that sits directly on your taskbar. A safe, user-mode alternative to tools that rely on kernel
 drivers (WinRing0, OpenHardwareMonitor/LibreHardwareMonitor drivers, etc.) — see
 [Security model](#security-model) below.
 
 ```
-CPU 32%  ▁▂▃▅▃▂    RAM 49%  ▃▄▃▄▅    GPU 1%  ▁▁▁▂▁
+CPU 32%  ▁▂▃▅▃▂    RAM 49%  ▃▄▃▄▅    GPU 1%  ▁▁▁▂▁    NET ↓1.2 MB/s ↑85 KB/s  ▁▃▂▅▂    DISK 4%  ▁▁▃▁▁
 ```
 
 ## Features
 
 - Live CPU (% + frequency), RAM (% + used/total), and GPU (% + memory) with rolling
   sparkline history (30/60/120/300s, configurable).
+- **New:** Network throughput (download/upload speed across all active adapters,
+  auto-scaling graph) and Disk activity (active time % like Task Manager, plus
+  read/write speed in the detailed view). Both are opt-in — enable them in
+  Settings → Display → Metrics.
+- **New:** Launching with Windows now shows the compact overlay straight away (it
+  previously started hidden in the tray). Use "Start minimized" if you prefer the old
+  behavior.
 - Compact, Compact+Graph, and Detailed display modes.
 - Sits directly on the taskbar (Left/Center/Right, or a custom position you drag it
   to); falls back to a floating window if the taskbar can't be located.
@@ -62,7 +69,8 @@ Settings (right-click → Settings) cover:
 
 - **General**: start with Windows, start minimized, update interval (250ms–2s),
   history length (30–300s).
-- **Display**: Compact / Compact+Graph / Detailed; which metrics to show; overlay
+- **Display**: Compact / Compact+Graph / Detailed; which metrics to show (CPU, RAM,
+  GPU on by default; Network and Disk off by default); overlay
   position (Left/Center/Right/Custom with X/Y offset); theme (System/Light/Dark).
 - **Color**: accent color presets, or "Custom..." for the native Windows color picker.
 - **Interaction**: tooltip on/off, click-through on/off.
@@ -90,7 +98,9 @@ tracking taskbar geometry, DPI, and Explorer restarts. See
 No kernel driver. No Explorer/DLL injection. No admin rights. No Defender exclusions.
 No telemetry, no network access. Every metric is read through documented Windows APIs
 (P/Invoke to `kernel32`/`user32`/`shell32`/`powrprof`, plus WMI and the standard
-Windows performance-counter subsystem). Full API-by-API breakdown in
+Windows performance-counter subsystem). The Network metric only reads the local
+adapters' byte counters (`System.Net.NetworkInformation`) — MonWin itself still opens
+no connections. Full API-by-API breakdown in
 [docs/SECURITY.md](docs/SECURITY.md).
 
 ## Privacy
@@ -105,7 +115,7 @@ messages (startup/shutdown/metric failures), never personal data.
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the UI → ViewModel → Service →
 Native layering, the polling/history model, and the GPU-aggregation logic. Metric
 providers are behind interfaces (`ICpuMonitor`, `IMemoryMonitor`, `IGpuMonitor`,
-`IGpuDataSource`) specifically so application logic is unit-testable without real
+`IGpuDataSource`, `INetworkMonitor`, `IDiskMonitor`, `IDiskDataSource`) specifically so application logic is unit-testable without real
 hardware.
 
 ## Testing
@@ -114,7 +124,9 @@ hardware.
 dotnet test SystemMonitor.sln -c Release
 ```
 
-46 tests: CPU delta-based usage math, memory percentage/used/available math, rolling
+62 tests: CPU delta-based usage math, memory percentage/used/available math, network
+rate math (including adapter-disconnect clamping), disk active-time/throughput
+projection, byte-rate formatting, rolling
 history buffer behavior (capacity, drop-oldest, resize), settings load/save/corruption
 recovery and field-level validation, taskbar-overlay positioning math (on-taskbar
 centering, floating fallback, Custom positioning), GPU aggregation (max-not-sum across
@@ -136,8 +148,47 @@ considered and intentionally skipped — see
 - GPU total VRAM can show "Unknown" on some >4GB cards due to a WMI/driver reporting
   limitation, not a MonWin bug (docs/TROUBLESHOOTING.md).
 - Multi-GPU adapter-to-name correlation is best-effort (docs/ARCHITECTURE.md).
-- Network/disk metrics are modeled (`Models/NetworkMetrics.cs`) but not implemented
-  yet — reserved, disabled in Settings, for a future release.
+- Network throughput sums all active adapters, so traffic through a VPN can be counted
+  twice (once on the VPN adapter, once on the physical one).
+- Disk activity is the aggregate across all physical disks, not per-drive.
+
+## Upcoming features
+
+Ideas under consideration — not committed to, and not in any particular release yet.
+
+**Quick wins**
+- Threshold colors — values turn amber/red above configurable limits (e.g. CPU > 85%).
+- Richer hover tooltip on the compact bar (GHz, RAM GB, GPU name, disk R/W) without
+  opening the detailed view.
+- Per-metric graph toggle (e.g. show Network as text only to save width).
+- Network speed in bits (Mbps) as an alternative to bytes (MB/s).
+- Live CPU % drawn into the tray icon, for when the overlay is hidden.
+- Global hotkey to show/hide the overlay or open the detailed view.
+
+**New metrics**
+- CPU/GPU temperature — only if it can be done reliably without a driver or admin
+  rights, in keeping with the [Security model](#security-model).
+- Battery: charge %, charging state, and time remaining (laptops).
+- Per-core CPU bars in the detailed view.
+- Ping/latency to a configurable host. This would be opt-in, since it is the first
+  feature that sends network traffic.
+- Per-disk and per-adapter breakdown, with a picker like the existing GPU adapter one.
+- Free space on the system drive.
+
+**Bigger features**
+- Top processes by CPU and RAM in the detailed view, with an "End task" action.
+- Alerts — a Windows notification when a metric stays above a threshold, or disk
+  space runs low.
+- History export to CSV and longer viewable history in the detailed view.
+- Multi-monitor support (pin the overlay to the taskbar on a secondary display).
+- Vertical layout for left/right-docked taskbars.
+- Opt-in update check against GitHub releases.
+
+**Polish**
+- Auto-hide while a fullscreen app or game is in the foreground.
+- Lower polling rate while hidden or on battery power.
+- winget package / installer alongside the portable zip.
+- Culture-invariant number formatting.
 
 ## License
 

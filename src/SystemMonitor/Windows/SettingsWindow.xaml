@@ -6,96 +6,192 @@
         WindowStartupLocation="CenterScreen"
         Title="Settings">
 
-    <Border Style="{StaticResource MonWin.Border.DetailedCard}" Width="380">
-        <StackPanel>
-            <TextBlock Text="Settings" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource MonWin.Foreground}" />
+    <Border Style="{StaticResource MonWin.Border.DetailedCard}" Width="400">
+        <DockPanel>
+            <TextBlock DockPanel.Dock="Top" Text="Settings" FontSize="16" FontWeight="Bold"
+                       Foreground="{DynamicResource MonWin.Foreground}" Margin="0,0,0,8" />
 
-            <TextBlock Text="GENERAL" Style="{StaticResource MonWin.SectionHeader}" />
-            <CheckBox Content="Start with Windows" IsChecked="{Binding StartWithWindows}" />
-            <CheckBox Content="Start minimized" IsChecked="{Binding StartMinimized}" />
-
-            <TextBlock Text="Update interval" Margin="0,8,0,2" Foreground="{DynamicResource MonWin.SubtleForeground}" FontSize="11" />
-            <ComboBox ItemsSource="{Binding UpdateIntervalOptionsMs}" SelectedItem="{Binding UpdateIntervalMs}" />
-
-            <TextBlock Text="History length" Margin="0,8,0,2" Foreground="{DynamicResource MonWin.SubtleForeground}" FontSize="11" />
-            <ComboBox ItemsSource="{Binding HistoryOptionsSeconds}" SelectedItem="{Binding HistorySeconds}" />
-
-            <TextBlock Text="DISPLAY" Style="{StaticResource MonWin.SectionHeader}" />
-            <TextBlock Text="Mode" Margin="0,0,0,2" Foreground="{DynamicResource MonWin.SubtleForeground}" FontSize="11" />
-            <RadioButton Content="Compact" GroupName="Mode"
-                         IsChecked="{Binding DisplayMode, Converter={StaticResource EnumEquals}, ConverterParameter=Compact}" />
-            <RadioButton Content="Compact + graph" GroupName="Mode"
-                         IsChecked="{Binding DisplayMode, Converter={StaticResource EnumEquals}, ConverterParameter=CompactGraph}" />
-            <RadioButton Content="Detailed" GroupName="Mode"
-                         IsChecked="{Binding DisplayMode, Converter={StaticResource EnumEquals}, ConverterParameter=Detailed}" />
-
-            <TextBlock Text="Metrics" Margin="0,10,0,2" Foreground="{DynamicResource MonWin.SubtleForeground}" FontSize="11" />
-            <CheckBox Content="CPU" IsChecked="{Binding ShowCpu}" />
-            <CheckBox Content="RAM" IsChecked="{Binding ShowRam}" />
-            <CheckBox Content="GPU" IsChecked="{Binding ShowGpu}" />
-            <CheckBox Content="Network" IsChecked="{Binding ShowNetwork}" />
-            <CheckBox Content="Disk" IsChecked="{Binding ShowDisk}" />
-
-            <TextBlock Text="Position" Margin="0,10,0,2" Foreground="{DynamicResource MonWin.SubtleForeground}" FontSize="11" />
-            <RadioButton Content="Left" GroupName="Position"
-                         IsChecked="{Binding Position, Converter={StaticResource EnumEquals}, ConverterParameter=Left}" />
-            <RadioButton Content="Center" GroupName="Position"
-                         IsChecked="{Binding Position, Converter={StaticResource EnumEquals}, ConverterParameter=Center}" />
-            <RadioButton Content="Right" GroupName="Position"
-                         IsChecked="{Binding Position, Converter={StaticResource EnumEquals}, ConverterParameter=Right}" />
-            <RadioButton Content="Custom" GroupName="Position"
-                         IsChecked="{Binding Position, Converter={StaticResource EnumEquals}, ConverterParameter=Custom}" />
-            <StackPanel Orientation="Horizontal" Margin="0,4,0,0"
-                        Visibility="{Binding Position, Converter={StaticResource EnumEquals}, ConverterParameter=Custom}">
-                <TextBlock Text="X:" VerticalAlignment="Center" Foreground="{DynamicResource MonWin.Foreground}" />
-                <TextBox Text="{Binding CustomX}" Width="60" Margin="4,0,10,0" />
-                <TextBlock Text="Y:" VerticalAlignment="Center" Foreground="{DynamicResource MonWin.Foreground}" />
-                <TextBox Text="{Binding CustomY}" Width="60" Margin="4,0,0,0" />
-            </StackPanel>
-
-            <TextBlock Text="Theme" Margin="0,10,0,2" Foreground="{DynamicResource MonWin.SubtleForeground}" FontSize="11" />
-            <RadioButton Content="System" GroupName="Theme"
-                         IsChecked="{Binding Theme, Converter={StaticResource EnumEquals}, ConverterParameter=System}" />
-            <RadioButton Content="Light" GroupName="Theme"
-                         IsChecked="{Binding Theme, Converter={StaticResource EnumEquals}, ConverterParameter=Light}" />
-            <RadioButton Content="Dark" GroupName="Theme"
-                         IsChecked="{Binding Theme, Converter={StaticResource EnumEquals}, ConverterParameter=Dark}" />
-
-            <TextBlock Text="COLOR" Style="{StaticResource MonWin.SectionHeader}" />
-            <ItemsControl ItemsSource="{Binding PresetAccentColors}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Orientation="Horizontal" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Button Width="22" Height="22" Margin="0,0,6,0" Padding="0"
-                                Background="Transparent" BorderThickness="0" Cursor="Hand"
-                                Command="{Binding DataContext.SelectAccentColorCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                CommandParameter="{Binding}">
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <Ellipse Fill="{Binding}" Stroke="{DynamicResource MonWin.Border}" StrokeThickness="1" />
-                                </ControlTemplate>
-                            </Button.Template>
-                        </Button>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                <Button Content="Custom..." Style="{StaticResource MonWin.Button.Secondary}" Command="{Binding PickCustomColorCommand}" Margin="0,0,8,0" />
-                <Button Content="Reset" Style="{StaticResource MonWin.Button.Secondary}" Command="{Binding ResetAccentColorCommand}" />
-            </StackPanel>
-
-            <TextBlock Text="INTERACTION" Style="{StaticResource MonWin.SectionHeader}" />
-            <CheckBox Content="Show tooltip" IsChecked="{Binding ShowTooltip}" />
-            <CheckBox Content="Click-through" IsChecked="{Binding ClickThrough}" />
-
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
                 <Button Content="Cancel" Style="{StaticResource MonWin.Button.Secondary}" Command="{Binding CancelCommand}" Margin="0,0,8,0" />
                 <Button Content="Save" Style="{StaticResource MonWin.Button}" Command="{Binding SaveCommand}" />
             </StackPanel>
-        </StackPanel>
+
+            <!-- Fixed height so switching tabs doesn't resize the flyout under the cursor. -->
+            <TabControl Height="440">
+                <TabItem Header="General">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="0,0,8,0">
+                            <TextBlock Text="STARTUP" Style="{StaticResource MonWin.SectionHeader}" Margin="0,0,0,6" />
+                            <CheckBox Content="Start with Windows" IsChecked="{Binding StartWithWindows}" />
+                            <CheckBox Content="Start minimized" IsChecked="{Binding StartMinimized}" />
+
+                            <TextBlock Text="MONITORING" Style="{StaticResource MonWin.SectionHeader}" />
+                            <TextBlock Text="Update interval (ms)" Style="{StaticResource MonWin.FieldLabel}" Margin="0,0,0,2" />
+                            <ComboBox ItemsSource="{Binding UpdateIntervalOptionsMs}" SelectedItem="{Binding UpdateIntervalMs}" />
+                            <TextBlock Text="History length (s)" Style="{StaticResource MonWin.FieldLabel}" />
+                            <ComboBox ItemsSource="{Binding HistoryOptionsSeconds}" SelectedItem="{Binding HistorySeconds}" />
+
+                            <TextBlock Text="INTERACTION" Style="{StaticResource MonWin.SectionHeader}" />
+                            <CheckBox Content="Show tooltip on hover" IsChecked="{Binding ShowTooltip}" />
+                            <CheckBox Content="Click-through" IsChecked="{Binding ClickThrough}" />
+                            <CheckBox Content="Show live CPU % in the tray icon" IsChecked="{Binding TrayShowsCpu}" />
+
+                            <TextBlock Text="Show/hide shortcut (leave empty to disable)" Style="{StaticResource MonWin.FieldLabel}" />
+                            <TextBox Text="{Binding ToggleHotkey, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock Text="{Binding HotkeyStatus}" FontSize="11" Margin="0,2,0,0" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource MonWin.SubtleForeground}"
+                                       Visibility="{Binding HotkeyStatus, Converter={StaticResource StringNotEmptyToVisibility}}" />
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Header="Display">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="0,0,8,0">
+                            <TextBlock Text="MODE" Style="{StaticResource MonWin.SectionHeader}" Margin="0,0,0,6" />
+                            <RadioButton Content="Compact" GroupName="Mode"
+                                         IsChecked="{Binding DisplayMode, Converter={StaticResource EnumEquals}, ConverterParameter=Compact}" />
+                            <RadioButton Content="Compact + graph" GroupName="Mode"
+                                         IsChecked="{Binding DisplayMode, Converter={StaticResource EnumEquals}, ConverterParameter=CompactGraph}" />
+                            <RadioButton Content="Detailed" GroupName="Mode"
+                                         IsChecked="{Binding DisplayMode, Converter={StaticResource EnumEquals}, ConverterParameter=Detailed}" />
+
+                            <TextBlock Text="POSITION" Style="{StaticResource MonWin.SectionHeader}" />
+                            <RadioButton Content="Left" GroupName="Position"
+                                         IsChecked="{Binding Position, Converter={StaticResource EnumEquals}, ConverterParameter=Left}" />
+                            <RadioButton Content="Center" GroupName="Position"
+                                         IsChecked="{Binding Position, Converter={StaticResource EnumEquals}, ConverterParameter=Center}" />
+                            <RadioButton Content="Right" GroupName="Position"
+                                         IsChecked="{Binding Position, Converter={StaticResource EnumEquals}, ConverterParameter=Right}" />
+                            <RadioButton Content="Custom" GroupName="Position"
+                                         IsChecked="{Binding Position, Converter={StaticResource EnumEquals}, ConverterParameter=Custom}" />
+                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0"
+                                        Visibility="{Binding Position, Converter={StaticResource EnumEquals}, ConverterParameter=Custom}">
+                                <TextBlock Text="X:" VerticalAlignment="Center" Foreground="{DynamicResource MonWin.Foreground}" />
+                                <TextBox Text="{Binding CustomX}" Width="60" Margin="4,0,10,0" />
+                                <TextBlock Text="Y:" VerticalAlignment="Center" Foreground="{DynamicResource MonWin.Foreground}" />
+                                <TextBox Text="{Binding CustomY}" Width="60" Margin="4,0,0,0" />
+                            </StackPanel>
+
+                            <TextBlock Text="THEME" Style="{StaticResource MonWin.SectionHeader}" />
+                            <RadioButton Content="System" GroupName="Theme"
+                                         IsChecked="{Binding Theme, Converter={StaticResource EnumEquals}, ConverterParameter=System}" />
+                            <RadioButton Content="Light" GroupName="Theme"
+                                         IsChecked="{Binding Theme, Converter={StaticResource EnumEquals}, ConverterParameter=Light}" />
+                            <RadioButton Content="Dark" GroupName="Theme"
+                                         IsChecked="{Binding Theme, Converter={StaticResource EnumEquals}, ConverterParameter=Dark}" />
+
+                            <TextBlock Text="ACCENT COLOR" Style="{StaticResource MonWin.SectionHeader}" />
+                            <ItemsControl ItemsSource="{Binding PresetAccentColors}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Width="22" Height="22" Margin="0,0,6,0" Padding="0"
+                                                Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                                Command="{Binding DataContext.SelectAccentColorCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Ellipse Fill="{Binding}" Stroke="{DynamicResource MonWin.Border}" StrokeThickness="1" />
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <Button Content="Custom..." Style="{StaticResource MonWin.Button.Secondary}" Command="{Binding PickCustomColorCommand}" Margin="0,0,8,0" />
+                                <Button Content="Reset" Style="{StaticResource MonWin.Button.Secondary}" Command="{Binding ResetAccentColorCommand}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Header="Metrics">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="0,0,8,0">
+                            <TextBlock Text="SHOW IN OVERLAY" Style="{StaticResource MonWin.SectionHeader}" Margin="0,0,0,6" />
+                            <TextBlock Text="Graph = sparkline in Compact + graph mode." Style="{StaticResource MonWin.FieldLabel}" Margin="0,0,0,4" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
+                                </Grid.RowDefinitions>
+                                <CheckBox Grid.Row="0" Content="CPU" IsChecked="{Binding ShowCpu}" />
+                                <CheckBox Grid.Row="0" Grid.Column="1" Content="Graph" IsChecked="{Binding GraphCpu}" IsEnabled="{Binding ShowCpu}" />
+                                <CheckBox Grid.Row="1" Content="RAM" IsChecked="{Binding ShowRam}" />
+                                <CheckBox Grid.Row="1" Grid.Column="1" Content="Graph" IsChecked="{Binding GraphRam}" IsEnabled="{Binding ShowRam}" />
+                                <CheckBox Grid.Row="2" Content="GPU" IsChecked="{Binding ShowGpu}" />
+                                <CheckBox Grid.Row="2" Grid.Column="1" Content="Graph" IsChecked="{Binding GraphGpu}" IsEnabled="{Binding ShowGpu}" />
+                                <CheckBox Grid.Row="3" Content="Network" IsChecked="{Binding ShowNetwork}" />
+                                <CheckBox Grid.Row="3" Grid.Column="1" Content="Graph" IsChecked="{Binding GraphNetwork}" IsEnabled="{Binding ShowNetwork}" />
+                                <CheckBox Grid.Row="4" Content="Disk" IsChecked="{Binding ShowDisk}" />
+                                <CheckBox Grid.Row="4" Grid.Column="1" Content="Graph" IsChecked="{Binding GraphDisk}" IsEnabled="{Binding ShowDisk}" />
+                            </Grid>
+
+                            <TextBlock Text="NETWORK SPEED UNIT" Style="{StaticResource MonWin.SectionHeader}" />
+                            <RadioButton Content="Bytes (KB/s, MB/s)" GroupName="NetUnit"
+                                         IsChecked="{Binding NetworkUnit, Converter={StaticResource EnumEquals}, ConverterParameter=Bytes}" />
+                            <RadioButton Content="Bits (Kbps, Mbps)" GroupName="NetUnit"
+                                         IsChecked="{Binding NetworkUnit, Converter={StaticResource EnumEquals}, ConverterParameter=Bits}" />
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Header="Alerts">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="0,0,8,0">
+                            <TextBlock Text="COLOR THRESHOLDS" Style="{StaticResource MonWin.SectionHeader}" Margin="0,0,0,6" />
+                            <TextBlock Text="A value turns amber at the warning % and red at the critical %."
+                                       Style="{StaticResource MonWin.FieldLabel}" Margin="0,0,0,6" TextWrapping="Wrap" />
+                            <Grid>
+                                <Grid.Resources>
+                                    <Style TargetType="TextBox">
+                                        <Setter Property="Width" Value="56" />
+                                        <Setter Property="Margin" Value="0,3,8,3" />
+                                        <Setter Property="HorizontalContentAlignment" Value="Right" />
+                                    </Style>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                        <Setter Property="Foreground" Value="{DynamicResource MonWin.Foreground}" />
+                                        <Setter Property="VerticalAlignment" Value="Center" />
+                                    </Style>
+                                </Grid.Resources>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="80" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Column="1" Text="Warning %" Opacity="0.7" FontSize="11" />
+                                <TextBlock Grid.Column="2" Text="Critical %" Opacity="0.7" FontSize="11" />
+                                <TextBlock Grid.Row="1" Text="CPU" />
+                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding CpuWarn}" />
+                                <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding CpuCrit}" />
+                                <TextBlock Grid.Row="2" Text="RAM" />
+                                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding RamWarn}" />
+                                <TextBox Grid.Row="2" Grid.Column="2" Text="{Binding RamCrit}" />
+                                <TextBlock Grid.Row="3" Text="GPU" />
+                                <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding GpuWarn}" />
+                                <TextBox Grid.Row="3" Grid.Column="2" Text="{Binding GpuCrit}" />
+                                <TextBlock Grid.Row="4" Text="Disk" />
+                                <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding DiskWarn}" />
+                                <TextBox Grid.Row="4" Grid.Column="2" Text="{Binding DiskCrit}" />
+                            </Grid>
+                            <Button Content="Reset to defaults" Style="{StaticResource MonWin.Button.Secondary}"
+                                    Command="{Binding ResetThresholdsCommand}" HorizontalAlignment="Left" Margin="0,10,0,0" />
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+            </TabControl>
+        </DockPanel>
     </Border>
 </Window>

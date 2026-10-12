@@ -6,6 +6,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using SystemMonitor.Models;
 using SystemMonitor.Native;
+using SystemMonitor.Services;
 using SystemMonitor.ViewModels;
 
 namespace SystemMonitor.Windows;
@@ -19,6 +20,8 @@ namespace SystemMonitor.Windows;
 public partial class MainWindow : Window
 {
     private readonly MainViewModel _viewModel;
+    private readonly IHotkeyService _hotkeyService;
+    private string? _appliedHotkey;
     private static readonly uint TaskbarCreatedMessage = TaskbarInterop.RegisterWindowMessage("TaskbarCreated");
     private const int WM_DISPLAYCHANGE = 0x007E;
     private const int WM_DPICHANGED = 0x02E0;
@@ -31,10 +34,11 @@ public partial class MainWindow : Window
     // Corner-grip resize sensitivity: pixels of drag per 1.0 of scale change.
     private const double ResizeDragSensitivity = 150.0;
 
-    public MainWindow(MainViewModel viewModel)
+    public MainWindow(MainViewModel viewModel, IHotkeyService hotkeyService)
     {
         InitializeComponent();
         _viewModel = viewModel;
+        _hotkeyService = hotkeyService;
         DataContext = _viewModel;
 
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
@@ -51,6 +55,9 @@ public partial class MainWindow : Window
 
         var hwndSource = HwndSource.FromHwnd(hwnd);
         hwndSource?.AddHook(WndProc);
+
+        _hotkeyService.Attach(hwnd);
+        ApplyHotkey();
 
         // The taskbar (Shell_TrayWnd) is itself an always-on-top window, and focusing/
         // clicking it can restack it above ours within the topmost band — a one-time
@@ -83,8 +90,27 @@ public partial class MainWindow : Window
         }
     }
 
+    private void ApplyHotkey()
+    {
+        var hotkey = _viewModel.Settings.ToggleHotkey;
+        if (hotkey == _appliedHotkey)
+        {
+            return;
+        }
+
+        _appliedHotkey = hotkey;
+        _hotkeyService.Apply(hotkey);
+    }
+
     private nint WndProc(nint hwnd, int msg, nint wParam, nint lParam, ref bool handled)
     {
+        if (_hotkeyService.IsHotkeyMessage(msg, wParam))
+        {
+            ToggleVisible();
+            handled = true;
+            return nint.Zero;
+        }
+
         // Deliberately narrow: WM_SETTINGCHANGE is broadcast for many unrelated system
         // settings (not just display/taskbar layout) and re-querying the taskbar on every
         // one of those caused visible positional jitter with no real trigger behind it.
@@ -222,6 +248,7 @@ public partial class MainWindow : Window
         if (e.PropertyName == nameof(MainViewModel.Settings))
         {
             ApplyClickThrough();
+            ApplyHotkey();
             if (!_viewModel.IsDetailed)
             {
                 RepositionWindow();

@@ -9,6 +9,7 @@ public sealed class SettingsViewModel : ObservableObject
     private readonly ISettingsService _settingsService;
     private readonly IStartupService _startupService;
     private readonly IGpuMonitor _gpuMonitor;
+    private readonly IHotkeyService _hotkeyService;
 
     private bool _startWithWindows;
     private bool _startMinimized;
@@ -20,6 +21,15 @@ public sealed class SettingsViewModel : ObservableObject
     private bool _showGpu;
     private bool _showNetwork;
     private bool _showDisk;
+    private bool _graphCpu;
+    private bool _graphRam;
+    private bool _graphGpu;
+    private bool _graphNetwork;
+    private bool _graphDisk;
+    private NetworkUnit _networkUnit;
+    private int _cpuWarn, _cpuCrit, _ramWarn, _ramCrit, _gpuWarn, _gpuCrit, _diskWarn, _diskCrit;
+    private bool _trayShowsCpu;
+    private string _toggleHotkey = string.Empty;
     private OverlayPosition _position;
     private int _customX;
     private int _customY;
@@ -43,6 +53,56 @@ public sealed class SettingsViewModel : ObservableObject
     public bool ShowGpu { get => _showGpu; set => SetProperty(ref _showGpu, value); }
     public bool ShowNetwork { get => _showNetwork; set => SetProperty(ref _showNetwork, value); }
     public bool ShowDisk { get => _showDisk; set => SetProperty(ref _showDisk, value); }
+    public bool GraphCpu { get => _graphCpu; set => SetProperty(ref _graphCpu, value); }
+    public bool GraphRam { get => _graphRam; set => SetProperty(ref _graphRam, value); }
+    public bool GraphGpu { get => _graphGpu; set => SetProperty(ref _graphGpu, value); }
+    public bool GraphNetwork { get => _graphNetwork; set => SetProperty(ref _graphNetwork, value); }
+    public bool GraphDisk { get => _graphDisk; set => SetProperty(ref _graphDisk, value); }
+    public NetworkUnit NetworkUnit { get => _networkUnit; set => SetProperty(ref _networkUnit, value); }
+    public int CpuWarn { get => _cpuWarn; set => SetProperty(ref _cpuWarn, value); }
+    public int CpuCrit { get => _cpuCrit; set => SetProperty(ref _cpuCrit, value); }
+    public int RamWarn { get => _ramWarn; set => SetProperty(ref _ramWarn, value); }
+    public int RamCrit { get => _ramCrit; set => SetProperty(ref _ramCrit, value); }
+    public int GpuWarn { get => _gpuWarn; set => SetProperty(ref _gpuWarn, value); }
+    public int GpuCrit { get => _gpuCrit; set => SetProperty(ref _gpuCrit, value); }
+    public int DiskWarn { get => _diskWarn; set => SetProperty(ref _diskWarn, value); }
+    public int DiskCrit { get => _diskCrit; set => SetProperty(ref _diskCrit, value); }
+    public bool TrayShowsCpu { get => _trayShowsCpu; set => SetProperty(ref _trayShowsCpu, value); }
+
+    public string ToggleHotkey
+    {
+        get => _toggleHotkey;
+        set
+        {
+            if (SetProperty(ref _toggleHotkey, value))
+            {
+                OnPropertyChanged(nameof(HotkeyStatus));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Feedback under the hotkey box: a format error for what's typed now, otherwise the
+    /// result of registering the saved shortcut (e.g. another app already owns it).
+    /// </summary>
+    public string? HotkeyStatus
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(ToggleHotkey))
+            {
+                return "Disabled.";
+            }
+
+            if (!HotkeyParser.TryParse(ToggleHotkey, out _, out _))
+            {
+                return "Use a modifier plus a key, e.g. Ctrl+Alt+M.";
+            }
+
+            return ToggleHotkey.Trim() == _settingsService.Current.ToggleHotkey ? _hotkeyService.Status : null;
+        }
+    }
+
     public OverlayPosition Position { get => _position; set => SetProperty(ref _position, value); }
     public int CustomX { get => _customX; set => SetProperty(ref _customX, value); }
     public int CustomY { get => _customY; set => SetProperty(ref _customY, value); }
@@ -62,6 +122,7 @@ public sealed class SettingsViewModel : ObservableObject
     public RelayCommand SelectAccentColorCommand { get; }
     public RelayCommand PickCustomColorCommand { get; }
     public RelayCommand ResetAccentColorCommand { get; }
+    public RelayCommand ResetThresholdsCommand { get; }
 
     public event EventHandler? RequestClose;
 
@@ -71,11 +132,12 @@ public sealed class SettingsViewModel : ObservableObject
     public event EventHandler? ExternalDialogOpening;
     public event EventHandler? ExternalDialogClosed;
 
-    public SettingsViewModel(ISettingsService settingsService, IStartupService startupService, IGpuMonitor gpuMonitor)
+    public SettingsViewModel(ISettingsService settingsService, IStartupService startupService, IGpuMonitor gpuMonitor, IHotkeyService hotkeyService)
     {
         _settingsService = settingsService;
         _startupService = startupService;
         _gpuMonitor = gpuMonitor;
+        _hotkeyService = hotkeyService;
 
         LoadFrom(_settingsService.Current);
 
@@ -84,6 +146,13 @@ public sealed class SettingsViewModel : ObservableObject
         SelectAccentColorCommand = new RelayCommand(p => AccentColorHex = p as string);
         PickCustomColorCommand = new RelayCommand(PickCustomColor);
         ResetAccentColorCommand = new RelayCommand(() => AccentColorHex = null);
+        ResetThresholdsCommand = new RelayCommand(ResetThresholds);
+    }
+
+    private void ResetThresholds()
+    {
+        CpuWarn = RamWarn = GpuWarn = DiskWarn = AppSettings.DefaultWarnThreshold;
+        CpuCrit = RamCrit = GpuCrit = DiskCrit = AppSettings.DefaultCritThreshold;
     }
 
     private void PickCustomColor()
@@ -135,6 +204,18 @@ public sealed class SettingsViewModel : ObservableObject
         _showGpu = s.ShowGpu;
         _showNetwork = s.ShowNetwork;
         _showDisk = s.ShowDisk;
+        _graphCpu = s.GraphCpu;
+        _graphRam = s.GraphRam;
+        _graphGpu = s.GraphGpu;
+        _graphNetwork = s.GraphNetwork;
+        _graphDisk = s.GraphDisk;
+        _networkUnit = s.NetworkUnit;
+        (_cpuWarn, _cpuCrit) = (s.CpuWarn, s.CpuCrit);
+        (_ramWarn, _ramCrit) = (s.RamWarn, s.RamCrit);
+        (_gpuWarn, _gpuCrit) = (s.GpuWarn, s.GpuCrit);
+        (_diskWarn, _diskCrit) = (s.DiskWarn, s.DiskCrit);
+        _trayShowsCpu = s.TrayShowsCpu;
+        _toggleHotkey = s.ToggleHotkey;
         _position = s.Position;
         _customX = s.CustomX;
         _customY = s.CustomY;
@@ -147,34 +228,40 @@ public sealed class SettingsViewModel : ObservableObject
 
     private void Save()
     {
-        // Start from the current settings so fields this dialog doesn't expose (the
-        // resize grip's OverlayScale, and the Left/Right position pixel offsets) are
-        // preserved rather than silently reset to their defaults.
-        var current = _settingsService.Current;
-        var settings = new AppSettings
-        {
-            StartWithWindows = StartWithWindows,
-            StartMinimized = StartMinimized,
-            UpdateIntervalMs = UpdateIntervalMs,
-            HistorySeconds = HistorySeconds,
-            DisplayMode = DisplayMode,
-            ShowCpu = ShowCpu,
-            ShowRam = ShowRam,
-            ShowGpu = ShowGpu,
-            ShowNetwork = ShowNetwork,
-            ShowDisk = ShowDisk,
-            Position = Position,
-            PositionOffsetX = current.PositionOffsetX,
-            PositionOffsetY = current.PositionOffsetY,
-            CustomX = CustomX,
-            CustomY = CustomY,
-            Theme = Theme,
-            ShowTooltip = ShowTooltip,
-            ClickThrough = ClickThrough,
-            SelectedGpuAdapterIndex = SelectedGpuAdapterIndex,
-            AccentColorHex = AccentColorHex,
-            OverlayScale = current.OverlayScale,
-        };
+        // Start from a copy of the current settings so fields this dialog doesn't expose
+        // (the resize grip's OverlayScale, the Left/Right position pixel offsets, and
+        // anything added later) are preserved rather than silently reset to defaults.
+        var settings = _settingsService.Current.Clone();
+        settings.StartWithWindows = StartWithWindows;
+        settings.StartMinimized = StartMinimized;
+        settings.UpdateIntervalMs = UpdateIntervalMs;
+        settings.HistorySeconds = HistorySeconds;
+        settings.DisplayMode = DisplayMode;
+        settings.ShowCpu = ShowCpu;
+        settings.ShowRam = ShowRam;
+        settings.ShowGpu = ShowGpu;
+        settings.ShowNetwork = ShowNetwork;
+        settings.ShowDisk = ShowDisk;
+        settings.GraphCpu = GraphCpu;
+        settings.GraphRam = GraphRam;
+        settings.GraphGpu = GraphGpu;
+        settings.GraphNetwork = GraphNetwork;
+        settings.GraphDisk = GraphDisk;
+        settings.NetworkUnit = NetworkUnit;
+        (settings.CpuWarn, settings.CpuCrit) = (CpuWarn, CpuCrit);
+        (settings.RamWarn, settings.RamCrit) = (RamWarn, RamCrit);
+        (settings.GpuWarn, settings.GpuCrit) = (GpuWarn, GpuCrit);
+        (settings.DiskWarn, settings.DiskCrit) = (DiskWarn, DiskCrit);
+        settings.TrayShowsCpu = TrayShowsCpu;
+        settings.ToggleHotkey = ToggleHotkey;
+        settings.Position = Position;
+        settings.CustomX = CustomX;
+        settings.CustomY = CustomY;
+        settings.Theme = Theme;
+        settings.ShowTooltip = ShowTooltip;
+        settings.ClickThrough = ClickThrough;
+        settings.SelectedGpuAdapterIndex = SelectedGpuAdapterIndex;
+        settings.AccentColorHex = AccentColorHex;
 
         _startupService.SetEnabled(StartWithWindows);
         _settingsService.Save(settings);

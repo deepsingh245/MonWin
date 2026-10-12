@@ -100,6 +100,42 @@ public class SettingsServiceTests : IDisposable
         Assert.True(Enum.IsDefined(settings.Theme));
     }
 
+    [Fact]
+    public void Load_InvalidThresholds_AreClampedAndOrdered()
+    {
+        var path = Path.Combine(_tempDir, "bad-thresholds.json");
+        File.WriteAllText(path, """{ "CpuWarn": 95, "CpuCrit": 80, "RamWarn": -10, "RamCrit": 500 }""");
+
+        var settings = SettingsService.Load(path, _logger);
+
+        Assert.Equal((80, 80), (settings.CpuWarn, settings.CpuCrit));
+        Assert.Equal((1, 100), (settings.RamWarn, settings.RamCrit));
+    }
+
+    [Fact]
+    public void Load_NullHotkeyAndBadUnit_FallBackSafely()
+    {
+        var path = Path.Combine(_tempDir, "bad-misc.json");
+        File.WriteAllText(path, """{ "ToggleHotkey": null, "NetworkUnit": 7 }""");
+
+        var settings = SettingsService.Load(path, _logger);
+
+        Assert.Equal(string.Empty, settings.ToggleHotkey);
+        Assert.Equal(NetworkUnit.Bytes, settings.NetworkUnit);
+    }
+
+    [Fact]
+    public void Clone_IsIndependentCopy()
+    {
+        var original = new AppSettings { OverlayScale = 1.5, CpuWarn = 60 };
+
+        var copy = original.Clone();
+        copy.CpuWarn = 70;
+
+        Assert.Equal(1.5, copy.OverlayScale);
+        Assert.Equal(60, original.CpuWarn);
+    }
+
     public void Dispose()
     {
         try { Directory.Delete(_tempDir, recursive: true); } catch { /* best-effort cleanup */ }

@@ -22,6 +22,21 @@ internal static partial class NativeMethods
 
     internal const int ProcessorInformation = 11; // POWER_INFORMATION_LEVEL.ProcessorInformation
 
+    [LibraryImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool RegisterHotKey(nint hWnd, int id, uint fsModifiers, uint vk);
+
+    [LibraryImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool UnregisterHotKey(nint hWnd, int id);
+
+    internal const int WM_HOTKEY = 0x0312;
+    internal const uint MOD_NOREPEAT = 0x4000;
+
+    [LibraryImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool DestroyIcon(nint hIcon);
+
     [StructLayout(LayoutKind.Sequential)]
     internal struct FILETIME
     {
