@@ -47,8 +47,10 @@ public partial class App : Application
         _mainWindow = _services.GetRequiredService<MainWindow>();
 
         var settings = _services.GetRequiredService<ISettingsService>().Current;
-        var startMinimized = settings.StartMinimized || e.Args.Contains("--minimized");
-        if (!startMinimized)
+        // Only the user's "Start minimized" setting hides the overlay. The old startup
+        // registry entry passed --minimized, which is deliberately ignored now so the
+        // compact view shows after boot by default.
+        if (!settings.StartMinimized)
         {
             _mainWindow.ShowOverlay();
         }

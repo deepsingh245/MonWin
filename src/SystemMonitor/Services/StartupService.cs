@@ -48,7 +48,7 @@ public sealed class StartupService : IStartupService
                              ?? Registry.CurrentUser.CreateSubKey(RunKeyPath);
             if (enabled)
             {
-                key.SetValue(ValueName, $"\"{_executablePathProvider()}\" --minimized", RegistryValueKind.String);
+                key.SetValue(ValueName, $"\"{_executablePathProvider()}\"",RegistryValueKind.String);
             }
             else
             {
