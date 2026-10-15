@@ -1,4 +1,4 @@
-
+﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
@@ -6,6 +6,18 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SystemMonitor", "src\SystemMonitor\SystemMonitor.csproj", "{A1E5F5C0-1000-4000-8000-000000000001}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SystemMonitor.Tests", "tests\SystemMonitor.Tests\SystemMonitor.Tests.csproj", "{A1E5F5C0-1000-4000-8000-000000000002}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{C5F560DF-F3A3-4575-B34B-726A10461266}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonWin.Core", "src\MonWin.Core\MonWin.Core.csproj", "{B5FCCC5E-2459-42AD-B4F1-6EDA564D1042}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{EEEF5678-0608-443A-8E93-21923F602901}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonWin.Core.Tests", "tests\MonWin.Core.Tests\MonWin.Core.Tests.csproj", "{082E7C7B-AD16-411C-9416-DC0F5B12352C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonWin.Linux", "src\MonWin.Linux\MonWin.Linux.csproj", "{D195A32B-2E0F-4B2E-B2C8-B87C230D23AF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonWin.Linux.Tests", "tests\MonWin.Linux.Tests\MonWin.Linux.Tests.csproj", "{852349DE-A467-4644-9745-9D72D14166DB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,8 +33,30 @@ Global
 		{A1E5F5C0-1000-4000-8000-000000000002}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A1E5F5C0-1000-4000-8000-000000000002}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A1E5F5C0-1000-4000-8000-000000000002}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B5FCCC5E-2459-42AD-B4F1-6EDA564D1042}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B5FCCC5E-2459-42AD-B4F1-6EDA564D1042}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B5FCCC5E-2459-42AD-B4F1-6EDA564D1042}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B5FCCC5E-2459-42AD-B4F1-6EDA564D1042}.Release|Any CPU.Build.0 = Release|Any CPU
+		{082E7C7B-AD16-411C-9416-DC0F5B12352C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{082E7C7B-AD16-411C-9416-DC0F5B12352C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{082E7C7B-AD16-411C-9416-DC0F5B12352C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{082E7C7B-AD16-411C-9416-DC0F5B12352C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D195A32B-2E0F-4B2E-B2C8-B87C230D23AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D195A32B-2E0F-4B2E-B2C8-B87C230D23AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D195A32B-2E0F-4B2E-B2C8-B87C230D23AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D195A32B-2E0F-4B2E-B2C8-B87C230D23AF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{852349DE-A467-4644-9745-9D72D14166DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{852349DE-A467-4644-9745-9D72D14166DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{852349DE-A467-4644-9745-9D72D14166DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{852349DE-A467-4644-9745-9D72D14166DB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{B5FCCC5E-2459-42AD-B4F1-6EDA564D1042} = {C5F560DF-F3A3-4575-B34B-726A10461266}
+		{082E7C7B-AD16-411C-9416-DC0F5B12352C} = {EEEF5678-0608-443A-8E93-21923F602901}
+		{D195A32B-2E0F-4B2E-B2C8-B87C230D23AF} = {C5F560DF-F3A3-4575-B34B-726A10461266}
+		{852349DE-A467-4644-9745-9D72D14166DB} = {EEEF5678-0608-443A-8E93-21923F602901}
 	EndGlobalSection
 EndGlobal

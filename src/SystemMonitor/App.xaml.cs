@@ -67,26 +67,10 @@ public partial class App : Application
 
     private void ConfigureServices(ServiceCollection services)
     {
-        services.AddSingleton<ILoggingService, LoggingService>();
-        services.AddSingleton<ISettingsService, SettingsService>();
-        services.AddSingleton<ICpuMonitor, CpuMonitorService>();
-        services.AddSingleton<IMemoryMonitor, MemoryMonitorService>();
-        services.AddSingleton<IGpuDataSource, WindowsGpuDataSource>();
-        services.AddSingleton<IGpuMonitor, GpuMonitorService>();
-        services.AddSingleton<INetworkMonitor, NetworkMonitorService>();
-        services.AddSingleton<IDiskDataSource, WindowsDiskDataSource>();
-        services.AddSingleton<IDiskMonitor, DiskMonitorService>();
-        services.AddSingleton<ISystemMonitorService, SystemMonitorService>();
-        services.AddSingleton<IStartupService, StartupService>();
-        services.AddSingleton<ITaskbarService, TaskbarService>();
-        services.AddSingleton<IThemeService, ThemeService>();
-        services.AddSingleton<IHotkeyService, HotkeyService>();
-        services.AddSingleton(_ => Dispatcher.CurrentDispatcher);
-        services.AddSingleton<MainViewModel>();
+        services.AddMonWinCore();
+        services.AddWindowsPlatform(Dispatcher.CurrentDispatcher);
         services.AddSingleton<MainWindow>();
-        services.AddTransient<SettingsViewModel>();
         services.AddTransient<SettingsWindow>();
-        services.AddTransient<AboutViewModel>();
         services.AddTransient<AboutWindow>();
     }
 

@@ -1,0 +1,11 @@
+{
+  "solution": {
+    "path": "SystemMonitor.sln",
+    "projects": [
+      "src\\MonWin.Core\\MonWin.Core.csproj",
+      "src\\MonWin.Linux\\MonWin.Linux.csproj",
+      "tests\\MonWin.Core.Tests\\MonWin.Core.Tests.csproj",
+      "tests\\MonWin.Linux.Tests\\MonWin.Linux.Tests.csproj"
+    ]
+  }
+}

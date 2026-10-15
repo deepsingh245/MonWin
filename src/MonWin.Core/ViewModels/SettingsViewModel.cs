@@ -10,6 +10,7 @@ public sealed class SettingsViewModel : ObservableObject
     private readonly IStartupService _startupService;
     private readonly IGpuMonitor _gpuMonitor;
     private readonly IHotkeyService _hotkeyService;
+    private readonly IColorPickerService _colorPicker;
 
     private bool _startWithWindows;
     private bool _startMinimized;
@@ -132,12 +133,13 @@ public sealed class SettingsViewModel : ObservableObject
     public event EventHandler? ExternalDialogOpening;
     public event EventHandler? ExternalDialogClosed;
 
-    public SettingsViewModel(ISettingsService settingsService, IStartupService startupService, IGpuMonitor gpuMonitor, IHotkeyService hotkeyService)
+    public SettingsViewModel(ISettingsService settingsService, IStartupService startupService, IGpuMonitor gpuMonitor, IHotkeyService hotkeyService, IColorPickerService colorPicker)
     {
         _settingsService = settingsService;
         _startupService = startupService;
         _gpuMonitor = gpuMonitor;
         _hotkeyService = hotkeyService;
+        _colorPicker = colorPicker;
 
         LoadFrom(_settingsService.Current);
 
@@ -160,36 +162,16 @@ public sealed class SettingsViewModel : ObservableObject
         ExternalDialogOpening?.Invoke(this, EventArgs.Empty);
         try
         {
-            using var dialog = new System.Windows.Forms.ColorDialog { FullOpen = true };
-            if (!string.IsNullOrWhiteSpace(AccentColorHex) && TryParseHex(AccentColorHex, out var r, out var g, out var b))
+            var picked = _colorPicker.PickColor(AccentColorHex);
+            if (picked is not null)
             {
-                dialog.Color = System.Drawing.Color.FromArgb(r, g, b);
-            }
-
-            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            {
-                var c = dialog.Color;
-                AccentColorHex = $"#{c.R:X2}{c.G:X2}{c.B:X2}";
+                AccentColorHex = picked;
             }
         }
         finally
         {
             ExternalDialogClosed?.Invoke(this, EventArgs.Empty);
         }
-    }
-
-    private static bool TryParseHex(string hex, out byte r, out byte g, out byte b)
-    {
-        r = g = b = 0;
-        var clean = hex.TrimStart('#');
-        if (clean.Length != 6)
-        {
-            return false;
-        }
-
-        return byte.TryParse(clean[..2], System.Globalization.NumberStyles.HexNumber, null, out r)
-            && byte.TryParse(clean[2..4], System.Globalization.NumberStyles.HexNumber, null, out g)
-            && byte.TryParse(clean[4..6], System.Globalization.NumberStyles.HexNumber, null, out b);
     }
 
     private void LoadFrom(AppSettings s)

@@ -2,6 +2,7 @@
 bin/
 obj/
 publish/
+publish-linux/
 *.user
 *.userosscache
 *.suo
@@ -23,6 +24,8 @@ Desktop.ini
 .DS_Store
 
 ## Packaging output
+dist/
+__pycache__/
 *.zip
 *.msix
 *.appx

@@ -11,7 +11,7 @@ namespace SystemMonitor.Services;
 public sealed class StartupService : IStartupService
 {
     private const string RunKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
-    private const string ValueName = "MonWinSystemMonitor";
+    internal const string ValueName = "MonWinSystemMonitor";
 
     private readonly ILoggingService _logger;
     private readonly Func<string> _executablePathProvider;

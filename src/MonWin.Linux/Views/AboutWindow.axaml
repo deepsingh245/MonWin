@@ -1,0 +1,20 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:SystemMonitor.ViewModels"
+        x:Class="MonWin.Linux.Views.AboutWindow"
+        x:DataType="vm:AboutViewModel"
+        Title="About MonWin"
+        Width="380" SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource MonWin.Background}">
+    <StackPanel Margin="20" Spacing="8">
+        <TextBlock Text="MonWin System Monitor" FontSize="16" FontWeight="Bold"
+                   Foreground="{DynamicResource MonWin.Foreground}" />
+        <TextBlock Text="{Binding Version, StringFormat='Version {0}'}"
+                   Foreground="{DynamicResource MonWin.SubtleForeground}" />
+        <TextBlock Text="{Binding PrivacyStatement}" TextWrapping="Wrap"
+                   Foreground="{DynamicResource MonWin.Foreground}" />
+        <Button Content="Close" HorizontalAlignment="Right" Margin="0,8,0,0" Click="OnCloseClick" />
+    </StackPanel>
+</Window>

@@ -5,7 +5,8 @@ using SystemMonitor.Models;
 namespace SystemMonitor.Services;
 
 /// <summary>
-/// Loads/saves <see cref="AppSettings"/> as JSON under %LOCALAPPDATA%\SystemMonitor\.
+/// Loads/saves <see cref="AppSettings"/> as JSON in <see cref="IAppPaths.ConfigDirectory"/>
+/// (Windows: %LOCALAPPDATA%\SystemMonitor, Linux: $XDG_CONFIG_HOME/monwin).
 /// Writes are atomic (temp file + move) and a missing or corrupted file always falls
 /// back to defaults rather than crashing the app.
 /// </summary>
@@ -20,12 +21,11 @@ public sealed class SettingsService : ISettingsService
 
     public AppSettings Current { get; private set; }
 
-    public SettingsService(ILoggingService logger)
+    public SettingsService(IAppPaths paths, ILoggingService logger)
     {
         _logger = logger;
-        var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SystemMonitor");
-        Directory.CreateDirectory(dir);
-        _settingsFilePath = Path.Combine(dir, "settings.json");
+        Directory.CreateDirectory(paths.ConfigDirectory);
+        _settingsFilePath = Path.Combine(paths.ConfigDirectory, "settings.json");
         Current = Load(_settingsFilePath, _logger);
     }
 

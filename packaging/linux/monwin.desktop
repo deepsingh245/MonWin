@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=MonWin
+GenericName=System Monitor
+Comment=CPU, RAM, GPU, network and disk overlay
+Exec="@EXEC@"
+Icon=monwin
+Terminal=false
+Categories=System;Monitor;
+Keywords=cpu;ram;gpu;network;disk;monitor;overlay;

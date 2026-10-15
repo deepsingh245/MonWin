@@ -1,8 +1,15 @@
 name: .NET Desktop
 
-# Runs on every push/PR against main: restores, builds (Release), and runs the test
-# suite on a Windows runner (required — this is a WPF/WinForms app targeting
-# net8.0-windows, which cannot build on Linux/macOS runners).
+# Runs on every push/PR against main.
+#
+#  * build-and-test (Windows): restore, build (Release) and test the whole solution, then run the same
+#    publish script used for releases. The WPF app targets net8.0-windows, so it can only
+#    be built on a Windows runner. The shared-core and Linux tests also run here.
+#  * linux:   builds and tests the shared core and the Linux app on Ubuntu (no WPF projects
+#    are touched), cross-checks the Linux publish and packaging, and uploads the tar.gz as a
+#    workflow artifact for review.
+#
+# Nothing here publishes a GitHub release: releasing remains a manual, explicit decision.
 on:
   push:
     branches: [ "main" ]
@@ -12,7 +19,17 @@ on:
   # Lets you trigger a run manually from the Actions tab without needing a push.
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+# MonWin makes no telemetry or network calls, including at build time: the Linux projects
+# already exclude Avalonia's build-time telemetry package, and this is a second safeguard.
+env:
+  AVALONIA_TELEMETRY_OPTOUT: "1"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+
 jobs:
+  # Job id kept as "build-and-test" so the existing required-check name doesn't change.
   build-and-test:
     runs-on: windows-latest
 
@@ -33,3 +50,55 @@ jobs:
 
       - name: Test
         run: dotnet test SystemMonitor.sln -c Release --no-build --verbosity normal
+
+      - name: Publish validation (same script as releases)
+        shell: pwsh
+        run: |
+          .\scripts\publish.ps1
+          if (-not (Test-Path publish\SystemMonitor.exe)) { throw "publish\SystemMonitor.exe was not produced" }
+
+  linux:
+    name: Linux (build, test, package)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      # Builds only MonWin.Core + MonWin.Linux and runs their test projects.
+      - name: Build and test (Release)
+        run: bash scripts/build-linux.sh
+
+      - name: Publish linux-x64 (self-contained)
+        run: bash scripts/publish-linux.sh linux-x64
+
+      - name: Package tar.gz
+        run: python3 scripts/package-linux.py
+
+      # Build-level checks only: the binary is not run here because there is no display.
+      - name: Verify package contents
+        run: |
+          set -euo pipefail
+          archive="$(ls dist/MonWin-*-linux-x64.tar.gz)"
+          (cd dist && sha256sum -c "$(basename "$archive").sha256")
+          mkdir verify && tar -xzf "$archive" -C verify
+          cd verify/MonWin-*-linux-x64
+          test -x monwin && test -x install.sh
+          head -c 4 monwin | grep -q ELF
+          sh ./install.sh --prefix "$RUNNER_TEMP/mw" && test -x "$RUNNER_TEMP/mw/bin/monwin"
+          sh ./install.sh --uninstall --prefix "$RUNNER_TEMP/mw"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MonWin-linux-x64
+          path: |
+            dist/MonWin-*-linux-x64.tar.gz
+            dist/MonWin-*-linux-x64.tar.gz.sha256
+          retention-days: 14
+          if-no-files-found: error

@@ -10,10 +10,6 @@ namespace SystemMonitor.Services;
 /// </summary>
 public sealed class TaskbarService : ITaskbarService
 {
-    private const int StartButtonAvoidanceWidth = 64;
-    private const int SystemTrayAvoidanceWidth = 160;
-    private const int GapAboveTaskbar = 6;
-
     private readonly ILoggingService _logger;
 
     public TaskbarService(ILoggingService logger)
@@ -69,47 +65,6 @@ public sealed class TaskbarService : ITaskbarService
         int customX,
         int customY,
         int overlayWidth,
-        int overlayHeight)
-    {
-        if (position == OverlayPosition.Custom)
-        {
-            return (customX + offsetX, customY + offsetY);
-        }
-
-        if (!taskbar.Found)
-        {
-            // Floating fallback: bottom-right corner of the work area (never covers the
-            // real taskbar since Windows already excludes it from the work area).
-            var fx = workArea.Right - overlayWidth - 16 + offsetX;
-            var fy = workArea.Bottom - overlayHeight - 16 + offsetY;
-            return (fx, fy);
-        }
-
-        // v1 focuses on the standard bottom taskbar (Windows 11 default and only
-        // user-selectable position); other edges use the same anchoring logic against
-        // the taskbar's own bounds, documented as best-effort in TROUBLESHOOTING.md.
-        //
-        // Sit directly on the taskbar strip (vertically centered within it) whenever the
-        // overlay is small enough to fit — this is what makes it read as "part of the
-        // taskbar" rather than a separate floating bar. Only fall back to floating just
-        // above it if the overlay (e.g. scaled up via the resize grip) is taller than the
-        // taskbar itself, since centering it would then spill off both edges.
-        var y = overlayHeight <= taskbar.Bounds.Height
-            ? taskbar.Bounds.Top + (taskbar.Bounds.Height - overlayHeight) / 2 + offsetY
-            : taskbar.Bounds.Top - overlayHeight - GapAboveTaskbar + offsetY;
-
-        if (y < workArea.Top)
-        {
-            y = taskbar.Bounds.Top + offsetY;
-        }
-
-        var x = position switch
-        {
-            OverlayPosition.Left => taskbar.Bounds.Left + StartButtonAvoidanceWidth + offsetX,
-            OverlayPosition.Right => taskbar.Bounds.Right - overlayWidth - SystemTrayAvoidanceWidth + offsetX,
-            _ => taskbar.Bounds.Left + (taskbar.Bounds.Width - overlayWidth) / 2 + offsetX,
-        };
-
-        return (x, y);
-    }
+        int overlayHeight) =>
+        OverlayPlacement.Compute(taskbar, workArea, position, offsetX, offsetY, customX, customY, overlayWidth, overlayHeight);
 }

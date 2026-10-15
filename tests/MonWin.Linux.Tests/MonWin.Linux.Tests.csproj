@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Linux provider/desktop-integration tests. They run against fixture text and temp
+       directories, so they execute on any OS (CI runs them on Linux; they also run on a
+       Windows dev machine). They verify logic, not a running Linux desktop. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>MonWin.Linux.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="coverlet.collector" Version="6.0.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Avalonia.BuildServices sends anonymous build-time telemetry (machine id, OS, project
+         name hash) every time a project that uses Avalonia is compiled (this test project reaches Avalonia through MonWin.Linux). MonWin promises no
+         telemetry, so it is switched off at the source: referencing the package directly with
+         every asset excluded stops its MSBuild task from being imported at all (the shipped
+         app never contained it - it is a build-time development dependency). -->
+    <PackageReference Include="Avalonia.BuildServices" Version="11.3.2" ExcludeAssets="all" />
+    <ProjectReference Include="..\..\src\MonWin.Linux\MonWin.Linux.csproj" />
+    <ProjectReference Include="..\..\src\MonWin.Core\MonWin.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\MonWin.Core.Tests\NoOpLoggingService.cs" Link="NoOpLoggingService.cs" />
+  </ItemGroup>
+
+</Project>

@@ -15,9 +15,9 @@ public sealed class LoggingService : ILoggingService
     private readonly string _logFilePath;
     private readonly object _lock = new();
 
-    public LoggingService()
+    public LoggingService(IAppPaths paths)
     {
-        var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SystemMonitor", "logs");
+        var dir = Path.Combine(paths.StateDirectory, "logs");
         Directory.CreateDirectory(dir);
         _logFilePath = Path.Combine(dir, "app.log");
     }

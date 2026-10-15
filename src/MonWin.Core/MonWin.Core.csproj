@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Platform-independent MonWin logic: models, settings, history/threshold math, the
+       polling orchestrator, view models and the abstractions each OS implements.
+       It must stay free of WPF, WinForms, Win32 and Linux-specific APIs so the Windows
+       (WPF) app, the Linux (Avalonia) app and a future macOS app can all share it.
+
+       RootNamespace stays "SystemMonitor" on purpose: the legacy namespaces are kept so
+       the existing Windows app and tests need no `using` changes. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>MonWin.Core</AssemblyName>
+    <RootNamespace>SystemMonitor</RootNamespace>
+    <Version>1.1.0</Version>
+    <Company>MonWin</Company>
+    <Product>MonWin System Monitor</Product>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Only the abstractions package (IServiceCollection); MIT, Microsoft. -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="SystemMonitor" />
+    <InternalsVisibleTo Include="SystemMonitor.Tests" />
+    <InternalsVisibleTo Include="MonWin.Core.Tests" />
+    <InternalsVisibleTo Include="MonWin.Linux" />
+    <InternalsVisibleTo Include="MonWin.Linux.Tests" />
+  </ItemGroup>
+
+</Project>

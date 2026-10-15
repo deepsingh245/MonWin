@@ -1,4 +1,3 @@
-using System.Windows.Threading;
 using static System.FormattableString;
 using SystemMonitor.Models;
 using SystemMonitor.Services;
@@ -12,7 +11,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     private readonly ISettingsService _settingsService;
     private readonly ITaskbarService _taskbarService;
     private readonly IStartupService _startupService;
-    private readonly Dispatcher _dispatcher;
+    private readonly IUiDispatcher _dispatcher;
 
     private bool _isDetailed;
     private bool _isPaused;
@@ -143,6 +142,15 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     public MetricSeverity DiskSeverity =>
         ThresholdEvaluator.Evaluate(Disk.IsAvailable ? Disk.ActivePercent : null, Settings.DiskWarn, Settings.DiskCrit);
 
+    // Sparkline visibility per metric: Compact+Graph mode AND that metric's own graph toggle.
+    // (WPF combines these with a MultiBinding; exposing them here lets any UI bind directly.)
+    private bool GraphsOn => Settings.DisplayMode == DisplayMode.CompactGraph;
+    public bool CpuGraphVisible => GraphsOn && Settings.GraphCpu;
+    public bool RamGraphVisible => GraphsOn && Settings.GraphRam;
+    public bool GpuGraphVisible => GraphsOn && Settings.GraphGpu;
+    public bool NetworkGraphVisible => GraphsOn && Settings.GraphNetwork;
+    public bool DiskGraphVisible => GraphsOn && Settings.GraphDisk;
+
     /// <summary>Hover summary of every enabled metric, so the details are a glance away without opening the detailed view.</summary>
     public string TooltipText
     {
@@ -174,7 +182,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         ISettingsService settingsService,
         ITaskbarService taskbarService,
         IStartupService startupService,
-        Dispatcher dispatcher)
+        IUiDispatcher dispatcher)
     {
         _monitor = monitor;
         _settingsService = settingsService;
@@ -246,7 +254,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
 
     private void OnSnapshotUpdated(object? sender, MonitorSnapshot snapshot)
     {
-        _dispatcher.BeginInvoke(() =>
+        _dispatcher.Post(() =>
         {
             Cpu = snapshot.Cpu;
             Memory = snapshot.Memory;
@@ -284,6 +292,11 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(GpuSeverity));
         OnPropertyChanged(nameof(DiskSeverity));
         OnPropertyChanged(nameof(TooltipText));
+        OnPropertyChanged(nameof(CpuGraphVisible));
+        OnPropertyChanged(nameof(RamGraphVisible));
+        OnPropertyChanged(nameof(GpuGraphVisible));
+        OnPropertyChanged(nameof(NetworkGraphVisible));
+        OnPropertyChanged(nameof(DiskGraphVisible));
     }
 
     public void Dispose()

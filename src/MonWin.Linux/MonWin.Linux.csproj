@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- MonWin for Linux desktops: an Avalonia UI over the shared MonWin.Core logic plus
+       Linux metric providers (/proc, /sys, NVML) and desktop integration (XDG paths and
+       autostart, StatusNotifier tray). The Windows WPF app is a separate project. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>MonWin.Linux</AssemblyName>
+    <RootNamespace>MonWin.Linux</RootNamespace>
+    <Version>1.1.0</Version>
+    <Company>MonWin</Company>
+    <Product>MonWin System Monitor</Product>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Compiled bindings: a wrong binding path fails the build instead of silently
+         showing nothing at runtime. -->
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <!-- MonWin formats every number with the invariant culture already, so ICU isn't needed.
+         This keeps the self-contained build smaller and avoids requiring libicu on the host. -->
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.22" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.22" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.22" />
+    <!-- Avalonia.BuildServices sends anonymous build-time telemetry (machine id, OS, project
+         name hash) every time a project that uses Avalonia is compiled. MonWin promises no
+         telemetry, so it is switched off at the source: referencing the package directly with
+         every asset excluded stops its MSBuild task from being imported at all (the shipped
+         app never contained it - it is a build-time development dependency). -->
+    <PackageReference Include="Avalonia.BuildServices" Version="11.3.2" ExcludeAssets="all" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MonWin.Core\MonWin.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="MonWin.Linux.Tests" />
+  </ItemGroup>
+
+</Project>

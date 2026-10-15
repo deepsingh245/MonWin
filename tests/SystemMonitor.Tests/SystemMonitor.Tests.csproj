@@ -30,6 +30,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\SystemMonitor\SystemMonitor.csproj" />
+    <ProjectReference Include="..\..\src\MonWin.Core\MonWin.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Shared test double, linked rather than duplicated. -->
+    <Compile Include="..\MonWin.Core.Tests\NoOpLoggingService.cs" Link="NoOpLoggingService.cs" />
   </ItemGroup>
 
 </Project>

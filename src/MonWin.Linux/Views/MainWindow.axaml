@@ -1,0 +1,161 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:MonWin.Linux.Views"
+        xmlns:vm="using:SystemMonitor.ViewModels"
+        x:Class="MonWin.Linux.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Title="MonWin System Monitor"
+        SystemDecorations="None"
+        Background="Transparent"
+        TransparencyLevelHint="Transparent"
+        ShowInTaskbar="False"
+        ShowActivated="False"
+        Topmost="True"
+        CanResize="False"
+        SizeToContent="WidthAndHeight">
+
+    <Window.Styles>
+        <Style Selector="Border.card">
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Background" Value="{DynamicResource MonWin.OverlayBackground}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource MonWin.Border}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="10,6" />
+        </Style>
+        <Style Selector="Border.card.detailed">
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Background" Value="{DynamicResource MonWin.Background}" />
+            <Setter Property="Padding" Value="20" />
+        </Style>
+        <Style Selector="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource MonWin.Foreground}" />
+        </Style>
+        <Style Selector="Button.secondary">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{DynamicResource MonWin.Border}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{DynamicResource MonWin.Foreground}" />
+        </Style>
+    </Window.Styles>
+
+    <Panel>
+        <LayoutTransformControl x:Name="ScaleHost">
+            <Border x:Name="Card" Classes="card">
+
+                <Border.ContextMenu>
+                    <ContextMenu x:Name="CardMenu">
+                        <MenuItem Header="Open Detailed View" Click="OnOpenDetailedClick" />
+                        <MenuItem Header="Show Compact View" Click="OnShowCompactClick" />
+                        <MenuItem Header="Settings" Click="OnOpenSettingsClick" />
+                        <MenuItem Header="Pause Monitoring" ToggleType="CheckBox" Click="OnTogglePauseClick" x:Name="PauseMenuItem" />
+                        <MenuItem Header="Start with Linux session" ToggleType="CheckBox" Click="OnToggleStartupClick" x:Name="StartupMenuItem" />
+                        <MenuItem Header="About" Click="OnOpenAboutClick" />
+                        <Separator />
+                        <MenuItem Header="Exit" Click="OnExitClick" />
+                    </ContextMenu>
+                </Border.ContextMenu>
+
+                <Panel>
+                    <!-- Compact / Compact+Graph overlay row. Every item carries a right margin and
+                         the panel cancels the last one, so hidden metrics never leave a gap. -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,-10,0" IsVisible="{Binding !IsDetailed}">
+                        <local:MetricControl Label="CPU" ValueText="{Binding CpuValueText}"
+                                             Values="{Binding CpuHistory}" IsCompact="True"
+                                             Severity="{Binding CpuSeverity}"
+                                             ShowGraph="{Binding CpuGraphVisible}"
+                                             IsVisible="{Binding Settings.ShowCpu}"
+                                             Margin="0,0,10,0" />
+                        <local:MetricControl Label="RAM" ValueText="{Binding RamValueText}"
+                                             Values="{Binding MemoryHistory}" IsCompact="True"
+                                             Severity="{Binding RamSeverity}"
+                                             ShowGraph="{Binding RamGraphVisible}"
+                                             IsVisible="{Binding Settings.ShowRam}"
+                                             Margin="0,0,10,0" />
+                        <local:MetricControl Label="GPU" ValueText="{Binding GpuValueText}"
+                                             Values="{Binding GpuHistory}" IsCompact="True"
+                                             Severity="{Binding GpuSeverity}"
+                                             ShowGraph="{Binding GpuGraphVisible}"
+                                             IsVisible="{Binding Settings.ShowGpu}"
+                                             Margin="0,0,10,0" />
+                        <local:MetricControl Label="NET" ValueText="{Binding NetValueText}"
+                                             Values="{Binding NetworkHistory}" IsCompact="True"
+                                             GraphMaxValue="0" ValueMinWidth="120"
+                                             ShowGraph="{Binding NetworkGraphVisible}"
+                                             IsVisible="{Binding Settings.ShowNetwork}"
+                                             Margin="0,0,10,0" />
+                        <local:MetricControl Label="DISK" ValueText="{Binding DiskValueText}"
+                                             Values="{Binding DiskHistory}" IsCompact="True"
+                                             Severity="{Binding DiskSeverity}"
+                                             ShowGraph="{Binding DiskGraphVisible}"
+                                             IsVisible="{Binding Settings.ShowDisk}"
+                                             Margin="0,0,10,0" />
+                    </StackPanel>
+
+                    <!-- Detailed presentation -->
+                    <StackPanel Orientation="Vertical" MinWidth="260" IsVisible="{Binding IsDetailed}">
+                        <DockPanel Margin="0,0,0,10">
+                            <Button Content="✕" DockPanel.Dock="Right" Width="28" Height="28"
+                                    Classes="secondary" Click="OnShowCompactClick"
+                                    HorizontalContentAlignment="Center" />
+                            <TextBlock Text="System Monitor" FontSize="15" FontWeight="Bold"
+                                       VerticalAlignment="Center" />
+                        </DockPanel>
+
+                        <local:MetricControl Label="CPU" ValueText="{Binding CpuValueText}"
+                                             SecondaryText="{Binding CpuSecondaryText}"
+                                             Values="{Binding CpuHistory}" IsCompact="False"
+                                             Severity="{Binding CpuSeverity}"
+                                             IsVisible="{Binding Settings.ShowCpu}"
+                                             Margin="0,0,0,14" />
+                        <TextBlock Text="{Binding ProcessorInfoText}" FontSize="10" Opacity="0.55"
+                                   Margin="0,-10,0,14" IsVisible="{Binding Settings.ShowCpu}" />
+
+                        <local:MetricControl Label="RAM" ValueText="{Binding RamValueText}"
+                                             SecondaryText="{Binding RamSecondaryText}"
+                                             Values="{Binding MemoryHistory}" IsCompact="False"
+                                             Severity="{Binding RamSeverity}"
+                                             IsVisible="{Binding Settings.ShowRam}"
+                                             Margin="0,0,0,14" />
+
+                        <local:MetricControl Label="GPU" ValueText="{Binding GpuValueText}"
+                                             SecondaryText="{Binding GpuSecondaryText}"
+                                             Values="{Binding GpuHistory}" IsCompact="False"
+                                             Severity="{Binding GpuSeverity}"
+                                             IsVisible="{Binding Settings.ShowGpu}" />
+                        <TextBlock Text="{Binding GpuName}" FontSize="10" Opacity="0.55" Margin="0,4,0,0"
+                                   IsVisible="{Binding Settings.ShowGpu}" />
+
+                        <local:MetricControl Label="Network" ValueText="{Binding NetTotalText}"
+                                             SecondaryText="{Binding NetSecondaryText}"
+                                             Values="{Binding NetworkHistory}" IsCompact="False"
+                                             GraphMaxValue="0"
+                                             IsVisible="{Binding Settings.ShowNetwork}"
+                                             Margin="0,14,0,0" />
+
+                        <local:MetricControl Label="Disk" ValueText="{Binding DiskValueText}"
+                                             SecondaryText="{Binding DiskSecondaryText}"
+                                             Values="{Binding DiskHistory}" IsCompact="False"
+                                             Severity="{Binding DiskSeverity}"
+                                             IsVisible="{Binding Settings.ShowDisk}"
+                                             Margin="0,14,0,0" />
+                    </StackPanel>
+                </Panel>
+            </Border>
+        </LayoutTransformControl>
+
+        <!-- Corner grip: drag to resize the whole card, double-click to reset. -->
+        <Thumb x:Name="ResizeThumb" Width="14" Height="14" Cursor="BottomRightCorner"
+               HorizontalAlignment="Right" VerticalAlignment="Bottom"
+               Opacity="0.35"
+               ToolTip.Tip="Drag to resize. Double-click to reset."
+               DragDelta="OnResizeThumbDragDelta"
+               DragCompleted="OnResizeThumbDragCompleted"
+               DoubleTapped="OnResizeThumbDoubleTapped">
+            <Thumb.Template>
+                <ControlTemplate>
+                    <Polygon Points="14,0 14,14 0,14" Fill="{DynamicResource MonWin.Accent}" />
+                </ControlTemplate>
+            </Thumb.Template>
+        </Thumb>
+    </Panel>
+</Window>

@@ -1,0 +1,182 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:MonWin.Linux.Views"
+        xmlns:vm="using:SystemMonitor.ViewModels"
+        x:Class="MonWin.Linux.Views.SettingsWindow"
+        x:DataType="vm:SettingsViewModel"
+        Title="MonWin Settings"
+        Width="420" Height="560"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource MonWin.Background}">
+
+    <Window.Styles>
+        <Style Selector="TextBlock.section">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,12,0,6" />
+        </Style>
+        <Style Selector="TextBlock.hint">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="{DynamicResource MonWin.SubtleForeground}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style Selector="CheckBox, RadioButton">
+            <Setter Property="Margin" Value="0,2" />
+        </Style>
+    </Window.Styles>
+
+    <DockPanel Margin="16">
+        <TextBlock DockPanel.Dock="Top" Text="Settings" FontSize="16" FontWeight="Bold" Margin="0,0,0,8" />
+
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right"
+                    Spacing="8" Margin="0,12,0,0">
+            <Button Content="Cancel" Command="{Binding CancelCommand}" />
+            <Button Content="Save" Command="{Binding SaveCommand}" Classes="accent" />
+        </StackPanel>
+
+        <TabControl>
+            <TabItem Header="General">
+                <ScrollViewer>
+                    <StackPanel Margin="0,0,12,0">
+                        <TextBlock Text="STARTUP" Classes="section" Margin="0,0,0,6" />
+                        <CheckBox Content="Start with my Linux session" IsChecked="{Binding StartWithWindows}" />
+                        <CheckBox Content="Start minimized (tray / menu only)" IsChecked="{Binding StartMinimized}" />
+                        <TextBlock Classes="hint"
+                                   Text="Adds or removes ~/.config/autostart/monwin.desktop (the standard XDG autostart file)." />
+
+                        <TextBlock Text="MONITORING" Classes="section" />
+                        <TextBlock Text="Update interval (ms)" Classes="hint" />
+                        <ComboBox ItemsSource="{Binding UpdateIntervalOptionsMs}" SelectedItem="{Binding UpdateIntervalMs}" />
+                        <TextBlock Text="History length (s)" Classes="hint" Margin="0,8,0,0" />
+                        <ComboBox ItemsSource="{Binding HistoryOptionsSeconds}" SelectedItem="{Binding HistorySeconds}" />
+
+                        <TextBlock Text="INTERACTION" Classes="section" />
+                        <CheckBox Content="Show tooltip on hover" IsChecked="{Binding ShowTooltip}" />
+                        <TextBlock Classes="hint"
+                                   Text="Global shortcuts, click-through and the live-CPU tray icon are not available on Linux yet." />
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Display">
+                <ScrollViewer>
+                    <StackPanel Margin="0,0,12,0">
+                        <TextBlock Text="MODE" Classes="section" Margin="0,0,0,6" />
+                        <RadioButton Content="Compact" GroupName="Mode"
+                                     IsChecked="{Binding DisplayMode, Converter={x:Static local:EnumMatchConverter.Instance}, ConverterParameter=Compact}" />
+                        <RadioButton Content="Compact + graph" GroupName="Mode"
+                                     IsChecked="{Binding DisplayMode, Converter={x:Static local:EnumMatchConverter.Instance}, ConverterParameter=CompactGraph}" />
+                        <RadioButton Content="Detailed" GroupName="Mode"
+                                     IsChecked="{Binding DisplayMode, Converter={x:Static local:EnumMatchConverter.Instance}, ConverterParameter=Detailed}" />
+
+                        <TextBlock Text="POSITION" Classes="section" />
+                        <TextBlock Classes="hint"
+                                   Text="The overlay floats along the bottom of your screen's usable area. Some Wayland compositors ignore requested window positions." />
+                        <RadioButton Content="Left" GroupName="Position"
+                                     IsChecked="{Binding Position, Converter={x:Static local:EnumMatchConverter.Instance}, ConverterParameter=Left}" />
+                        <RadioButton Content="Center" GroupName="Position"
+                                     IsChecked="{Binding Position, Converter={x:Static local:EnumMatchConverter.Instance}, ConverterParameter=Center}" />
+                        <RadioButton Content="Right" GroupName="Position"
+                                     IsChecked="{Binding Position, Converter={x:Static local:EnumMatchConverter.Instance}, ConverterParameter=Right}" />
+                        <RadioButton Content="Custom (drag it where you want)" GroupName="Position"
+                                     IsChecked="{Binding Position, Converter={x:Static local:EnumMatchConverter.Instance}, ConverterParameter=Custom}" />
+                        <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,4,0,0">
+                            <TextBlock Text="X:" VerticalAlignment="Center" />
+                            <TextBox Text="{Binding CustomX}" Width="70" />
+                            <TextBlock Text="Y:" VerticalAlignment="Center" />
+                            <TextBox Text="{Binding CustomY}" Width="70" />
+                        </StackPanel>
+
+                        <TextBlock Text="THEME" Classes="section" />
+                        <RadioButton Content="System" GroupName="Theme"
+                                     IsChecked="{Binding Theme, Converter={x:Static local:EnumMatchConverter.Instance}, ConverterParameter=System}" />
+                        <RadioButton Content="Light" GroupName="Theme"
+                                     IsChecked="{Binding Theme, Converter={x:Static local:EnumMatchConverter.Instance}, ConverterParameter=Light}" />
+                        <RadioButton Content="Dark" GroupName="Theme"
+                                     IsChecked="{Binding Theme, Converter={x:Static local:EnumMatchConverter.Instance}, ConverterParameter=Dark}" />
+
+                        <TextBlock Text="ACCENT COLOR" Classes="section" />
+                        <ItemsControl ItemsSource="{Binding PresetAccentColors}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="6" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="x:String">
+                                    <Button Width="26" Height="26" Padding="0" Background="{Binding}"
+                                            CornerRadius="13"
+                                            Command="{Binding $parent[ItemsControl].((vm:SettingsViewModel)DataContext).SelectAccentColorCommand}"
+                                            CommandParameter="{Binding}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+                            <TextBox Text="{Binding AccentColorHex}" Watermark="#RRGGBB" Width="110" />
+                            <Button Content="Reset" Command="{Binding ResetAccentColorCommand}" />
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Metrics">
+                <ScrollViewer>
+                    <StackPanel Margin="0,0,12,0">
+                        <TextBlock Text="SHOW IN OVERLAY" Classes="section" Margin="0,0,0,6" />
+                        <TextBlock Text="Graph = sparkline in Compact + graph mode." Classes="hint" />
+                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto" Margin="0,4,0,0">
+                            <CheckBox Grid.Row="0" Content="CPU" IsChecked="{Binding ShowCpu}" />
+                            <CheckBox Grid.Row="0" Grid.Column="1" Content="Graph" IsChecked="{Binding GraphCpu}" IsEnabled="{Binding ShowCpu}" />
+                            <CheckBox Grid.Row="1" Content="RAM" IsChecked="{Binding ShowRam}" />
+                            <CheckBox Grid.Row="1" Grid.Column="1" Content="Graph" IsChecked="{Binding GraphRam}" IsEnabled="{Binding ShowRam}" />
+                            <CheckBox Grid.Row="2" Content="GPU" IsChecked="{Binding ShowGpu}" />
+                            <CheckBox Grid.Row="2" Grid.Column="1" Content="Graph" IsChecked="{Binding GraphGpu}" IsEnabled="{Binding ShowGpu}" />
+                            <CheckBox Grid.Row="3" Content="Network" IsChecked="{Binding ShowNetwork}" />
+                            <CheckBox Grid.Row="3" Grid.Column="1" Content="Graph" IsChecked="{Binding GraphNetwork}" IsEnabled="{Binding ShowNetwork}" />
+                            <CheckBox Grid.Row="4" Content="Disk" IsChecked="{Binding ShowDisk}" />
+                            <CheckBox Grid.Row="4" Grid.Column="1" Content="Graph" IsChecked="{Binding GraphDisk}" IsEnabled="{Binding ShowDisk}" />
+                        </Grid>
+
+                        <TextBlock Text="NETWORK SPEED UNIT" Classes="section" />
+                        <RadioButton Content="Bytes (KB/s, MB/s)" GroupName="NetUnit"
+                                     IsChecked="{Binding NetworkUnit, Converter={x:Static local:EnumMatchConverter.Instance}, ConverterParameter=Bytes}" />
+                        <RadioButton Content="Bits (Kbps, Mbps)" GroupName="NetUnit"
+                                     IsChecked="{Binding NetworkUnit, Converter={x:Static local:EnumMatchConverter.Instance}, ConverterParameter=Bits}" />
+
+                        <TextBlock Text="GPU" Classes="section" />
+                        <TextBlock Classes="hint"
+                                   Text="GPU usage depends on the driver: AMD (amdgpu) and NVIDIA (NVML) report it; Intel and most other drivers do not, and then show N/A." />
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Alerts">
+                <ScrollViewer>
+                    <StackPanel Margin="0,0,12,0">
+                        <TextBlock Text="COLOR THRESHOLDS" Classes="section" Margin="0,0,0,6" />
+                        <TextBlock Classes="hint"
+                                   Text="A value turns amber at the warning % and red at the critical %." />
+                        <Grid ColumnDefinitions="80,Auto,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto" Margin="0,6,0,0">
+                            <TextBlock Grid.Column="1" Text="Warning %" Classes="hint" Margin="0,0,8,0" />
+                            <TextBlock Grid.Column="2" Text="Critical %" Classes="hint" />
+                            <TextBlock Grid.Row="1" Text="CPU" VerticalAlignment="Center" />
+                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding CpuWarn}" Width="64" Margin="0,3,8,3" />
+                            <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding CpuCrit}" Width="64" Margin="0,3" />
+                            <TextBlock Grid.Row="2" Text="RAM" VerticalAlignment="Center" />
+                            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding RamWarn}" Width="64" Margin="0,3,8,3" />
+                            <TextBox Grid.Row="2" Grid.Column="2" Text="{Binding RamCrit}" Width="64" Margin="0,3" />
+                            <TextBlock Grid.Row="3" Text="GPU" VerticalAlignment="Center" />
+                            <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding GpuWarn}" Width="64" Margin="0,3,8,3" />
+                            <TextBox Grid.Row="3" Grid.Column="2" Text="{Binding GpuCrit}" Width="64" Margin="0,3" />
+                            <TextBlock Grid.Row="4" Text="Disk" VerticalAlignment="Center" />
+                            <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding DiskWarn}" Width="64" Margin="0,3,8,3" />
+                            <TextBox Grid.Row="4" Grid.Column="2" Text="{Binding DiskCrit}" Width="64" Margin="0,3" />
+                        </Grid>
+                        <Button Content="Reset to defaults" Command="{Binding ResetThresholdsCommand}"
+                                HorizontalAlignment="Left" Margin="0,10,0,0" />
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</Window>
